@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>115年 克斯小人提內訓控管</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dark:#1A3A0F;
+  --mid:#2D5A1E;
+  --green:#639922;
+  --light:#E8F4D9;
+  --pale:#F4FAF0;
+  --white:#FFFFFF;
+  --gray:#F5F5F3;
+  --border:#E0E8D8;
+  --text:#1A2415;
+  --muted:#6B7A6B;
+  --warn:#B45309;
+  --warn-bg:#FFFBEB;
+  --danger:#B91C1C;
+  --danger-bg:#FEF2F2;
+  --ok:#15803D;
+  --ok-bg:#F0FDF4;
+  --badge-r:6px;
+}
+body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale);color:var(--text);font-size:14px;line-height:1.6}
+
+/* TOP BAR */
+.topbar{background:var(--dark);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{color:#fff;font-size:15px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:10px}
+.topbar-title span{background:var(--green);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.last-update{color:rgba(255,255,255,.55);font-size:12px}
+.btn-refresh{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;transition:background .2s}
+.btn-refresh:hover{background:rgba(255,255,255,.22)}
+
+/* CONTAINER */
+.container{max-width:1200px;margin:0 auto;padding:20px 20px}
+
+/* LOADING */
+.loading{text-align:center;padding:80px 20px;color:var(--muted)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 16px;position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mid)}
+.metric.warn::before{background:#D97706}
+.metric.danger::before{background:#DC2626}
+.metric.ok::before{background:var(--green)}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.metric-value{font-size:28px;font-weight:700;color:var(--dark);line-height:1}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0}
+.tab{padding:10px 20px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border:2px solid transparent;border-bottom:none;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--dark);background:var(--light)}
+.tab.active{color:var(--dark);background:var(--white);border-color:var(--border);border-bottom-color:var(--white)}
+
+/* PANEL */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:20px;display:none}
+.panel.active{display:block}
+.panel-title{font-size:15px;font-weight:700;color:var(--dark);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--dark);color:#fff;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;white-space:nowrap}
+th:first-child{border-radius:8px 0 0 0}
+th:last-child{border-radius:0 8px 0 0}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--pale)}
+tr:nth-child(even) td{background:var(--gray)}
+tr:nth-child(even):hover td{background:var(--light)}
+
+/* STATUS BADGE */
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-done{background:#DCFCE7;color:#15803D}
+.badge-going{background:#FEF9C3;color:#A16207}
+.badge-wait{background:#DBEAFE;color:#1D4ED8}
+.badge-pause{background:#FEE2E2;color:#B91C1C}
+.badge-sign{background:#F3E8FF;color:#7E22CE}
+.badge-eval{background:#E0F2FE;color:#0369A1}
+.badge-empty{background:#F3F4F6;color:#6B7280}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;color:var(--text);background:#fff;outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--green)}
+.filter-bar label{font-size:12px;color:var(--muted);font-weight:600}
+.result-count{margin-left:auto;font-size:12px;color:var(--muted)}
+
+/* COMPANY STATS */
+.company-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.company-card{background:var(--gray);border:1px solid var(--border);border-radius:10px;padding:16px}
+.company-name{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px;line-height:1.4}
+.progress-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.progress-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .4s}
+.progress-fill.warn{background:#D97706}
+.progress-fill.danger{background:#DC2626}
+.progress-pct{font-size:12px;font-weight:700;color:var(--dark);min-width:32px;text-align:right}
+.company-stats{display:flex;gap:12px;margin-top:10px}
+.cstat{text-align:center;flex:1}
+.cstat-val{font-size:18px;font-weight:700;color:var(--dark)}
+.cstat-lbl{font-size:11px;color:var(--muted)}
+
+/* ALERT ITEMS */
+.alert-list{display:flex;flex-direction:column;gap:10px}
+.alert-item{border-radius:10px;padding:14px 16px;border-left:4px solid}
+.alert-item.pre{background:var(--warn-bg);border-color:#D97706}
+.alert-item.post{background:#EFF6FF;border-color:#3B82F6}
+.alert-head{font-weight:700;font-size:13px;margin-bottom:4px}
+.alert-meta{font-size:12px;color:var(--muted)}
+
+/* OWNER STATS */
+.owner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.owner-card{background:var(--gray);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.owner-name{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px}
+.owner-num{font-size:32px;font-weight:700;color:var(--green)}
+.owner-lbl{font-size:11px;color:var(--muted)}
+.owner-row{display:flex;justify-content:center;gap:20px;margin-top:10px}
+.ostat-val{font-size:16px;font-weight:700;color:var(--dark)}
+.ostat-lbl{font-size:11px;color:var(--muted)}
+
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+
+@media(max-width:900px){
+  .metrics{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .tabs{flex-wrap:wrap}
+  .tab{flex:1;text-align:center;font-size:12px;padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">
+    📋 克斯小人提內訓控管
+    <span>115年</span>
+  </div>
+  <div class="topbar-right">
+    <span class="last-update" id="lastUpdate">載入中...</span>
+    <button class="btn-refresh" onclick="loadData()">↻ 重新整理</button>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    載入資料中...
+  </div>
+
+  <div id="main" style="display:none">
+    <!-- METRICS -->
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">總場次</div><div class="metric-value" id="m-total">—</div><div class="metric-sub">所有課程場次</div></div>
+      <div class="metric ok"><div class="metric-label">完成結案</div><div class="metric-value" id="m-done">—</div><div class="metric-sub" id="m-done-pct">完成率</div></div>
+      <div class="metric warn"><div class="metric-label">執行中</div><div class="metric-value" id="m-going">—</div><div class="metric-sub">進行中場次</div></div>
+      <div class="metric"><div class="metric-label">本週開課</div><div class="metric-value" id="m-thisweek">—</div><div class="metric-sub">7天內開課</div></div>
+      <div class="metric warn"><div class="metric-label">待回報</div><div class="metric-value" id="m-report">—</div><div class="metric-sub">執行後待回報</div></div>
+      <div class="metric danger"><div class="metric-label">暫緩／取消</div><div class="metric-value" id="m-cancel">—</div><div class="metric-sub">需關注</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('alerts',this)">⚠️ 本週提醒</div>
+      <div class="tab" onclick="switchTab('company',this)">🏢 各公司執行率</div>
+      <div class="tab" onclick="switchTab('owner',this)">👤 負責人統計</div>
+      <div class="tab" onclick="switchTab('all',this)">📋 全部課程</div>
+    </div>
+
+    <!-- TAB: 提醒 -->
+    <div class="panel active" id="tab-alerts">
+      <div class="panel-title">⚠️ 本週需關注項目</div>
+      <div class="alert-list" id="alert-list"></div>
+    </div>
+
+    <!-- TAB: 公司 -->
+    <div class="panel" id="tab-company">
+      <div class="panel-title">🏢 各公司執行率</div>
+      <div class="company-grid" id="company-grid"></div>
+    </div>
+
+    <!-- TAB: 負責人 -->
+    <div class="panel" id="tab-owner">
+      <div class="panel-title">👤 負責人工作統計</div>
+      <div class="owner-grid" id="owner-grid"></div>
+    </div>
+
+    <!-- TAB: 全部 -->
+    <div class="panel" id="tab-all">
+      <div class="panel-title">📋 全部課程</div>
+      <div class="filter-bar">
+        <label>公司</label>
+        <select id="f-company" onchange="renderAll()"><option value="">全部</option></select>
+        <label>負責人</label>
+        <select id="f-owner" onchange="renderAll()"><option value="">全部</option></select>
+        <label>狀態</label>
+        <select id="f-status" onchange="renderAll()">
+          <option value="">全部</option>
+          <option>收件確認</option><option>評估中</option><option>合約簽訂</option>
+          <option>執行中</option><option>完成結案</option><option>暫緩</option><option>取消</option>
+        </select>
+        <input type="text" id="f-search" placeholder="搜尋課程名稱..." oninput="renderAll()" style="min-width:180px">
+        <span class="result-count" id="result-count"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>公司名稱</th><th>課程名稱</th><th>場次</th>
+            <th>開課日期</th><th>開課地點</th><th>負責人</th><th>狀態</th>
+          </tr></thead>
+          <tbody id="all-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwgqyaipRkpHcVG6muwvBA3ypvpffwzCPR3w1i1n9Pko0ooZEh-PXrQX2Jo8efR79U/exec';
+let allData = [];
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function badge(status) {
+  const map = {
+    '完成結案':'badge-done','執行中':'badge-going','收件確認':'badge-wait',
+    '合約簽訂':'badge-sign','評估中':'badge-eval','暫緩':'badge-pause','取消':'badge-pause'
+  };
+  const cls = map[status] || 'badge-empty';
+  return `<span class="badge ${cls}">${status||'—'}</span>`;
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const s = str.toString().trim();
+  const m = s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  // 短格式 M/D
+  const m2 = s.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if (m2) return new Date(2025, +m2[1]-1, +m2[2]);
+  return null;
+}
+
+function daysDiff(d) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+
+function loadData() {
+  document.getElementById('loading').style.display='block';
+  document.getElementById('main').style.display='none';
+  fetch(GAS_URL)
+    .then(r=>r.json())
+    .then(data=>{
+      allData = data;
+      buildDashboard();
+      document.getElementById('loading').style.display='none';
+      document.getElementById('main').style.display='block';
+      document.getElementById('lastUpdate').textContent='更新：'+new Date().toLocaleTimeString('zh-TW');
+    })
+    .catch(e=>{
+      document.getElementById('loading').innerHTML='<div style="color:#B91C1C;padding:40px">⚠️ 無法載入資料，請確認 Apps Script 已部署並開放「所有人」存取。</div>';
+    });
+}
+
+function buildDashboard() {
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let total=0, done=0, going=0, thisweek=0, report=0, cancel=0;
+  allData.forEach(r=>{
+    if (!r.company) return;
+    total++;
+    if (r.status==='完成結案') done++;
+    else if (r.status==='執行中') going++;
+    if (r.status==='暫緩'||r.status==='取消') cancel++;
+    const d = parseDate(r.date);
+    if (d) {
+      const diff = daysDiff(d);
+      if (diff>=0 && diff<=7) thisweek++;
+      if (diff<0 && diff>=-7 && r.status!=='完成結案') report++;
+    }
+  });
+
+  document.getElementById('m-total').textContent   = total;
+  document.getElementById('m-done').textContent    = done;
+  document.getElementById('m-done-pct').textContent= total ? Math.round(done/total*100)+'% 完成率' : '—';
+  document.getElementById('m-going').textContent   = going;
+  document.getElementById('m-thisweek').textContent= thisweek;
+  document.getElementById('m-report').textContent  = report;
+  document.getElementById('m-cancel').textContent  = cancel;
+
+  buildAlerts();
+  buildCompany();
+  buildOwner();
+  buildFilters();
+  renderAll();
+}
+
+function buildAlerts() {
+  const list = document.getElementById('alert-list');
+  const items = [];
+  allData.forEach(r=>{
+    if (!r.company) return;
+    const d = parseDate(r.date);
+    if (!d) return;
+    const diff = daysDiff(d);
+    if (diff>=0 && diff<=7) {
+      items.push({type:'pre', diff, r});
+    } else if (diff<0 && diff>=-7 && r.status!=='完成結案') {
+      items.push({type:'post', diff, r});
+    }
+  });
+  items.sort((a,b)=>a.diff-b.diff);
+  if (!items.length) {
+    list.innerHTML='<div class="empty">本週沒有需要關注的項目 ✓</div>'; return;
+  }
+  list.innerHTML = items.map(i=>{
+    const r = i.r;
+    if (i.type==='pre') {
+      const label = i.diff===0 ? '🟢 今日開課' : `⚠️ ${i.diff} 天後開課`;
+      return `<div class="alert-item pre">
+        <div class="alert-head">${label}｜${r.company}</div>
+        <div class="alert-meta">${r.course} · ${r.session} · ${r.date||'—'} · 負責：${r.owner||'—'}</div>
+      </div>`;
+    } else {
+      return `<div class="alert-item post">
+        <div class="alert-head">📋 請回報執行結果｜${r.company}</div>
+        <div class="alert-meta">${r.course} · ${r.session} · 開課：${r.date||'—'} · 負責：${r.owner||'—'}</div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function buildCompany() {
+  const map = {};
+  allData.forEach(r=>{
+    if (!r.company) return;
+    if (!map[r.company]) map[r.company]={total:0,done:0,going:0,wait:0};
+    map[r.company].total++;
+    if (r.status==='完成結案') map[r.company].done++;
+    else if (r.status==='執行中') map[r.company].going++;
+    else map[r.company].wait++;
+  });
+  const grid = document.getElementById('company-grid');
+  const entries = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  grid.innerHTML = entries.map(([name,s])=>{
+    const pct = s.total ? Math.round(s.done/s.total*100) : 0;
+    const fillClass = pct>=80?'':'pct<40?\'danger\':\'warn\'';
+    const fc = pct>=80?'':(pct<40?'danger':'warn');
+    return `<div class="company-card">
+      <div class="company-name">${name}</div>
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill ${fc}" style="width:${pct}%"></div></div>
+        <div class="progress-pct">${pct}%</div>
+      </div>
+      <div class="company-stats">
+        <div class="cstat"><div class="cstat-val">${s.total}</div><div class="cstat-lbl">總場次</div></div>
+        <div class="cstat"><div class="cstat-val" style="color:var(--ok)">${s.done}</div><div class="cstat-lbl">完成</div></div>
+        <div class="cstat"><div class="cstat-val" style="color:#A16207">${s.going}</div><div class="cstat-lbl">執行中</div></div>
+        <div class="cstat"><div class="cstat-val" style="color:var(--muted)">${s.wait}</div><div class="cstat-lbl">待開課</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildOwner() {
+  const map = {};
+  allData.forEach(r=>{
+    if (!r.company) return;
+    const o = r.owner || '未指派';
+    if (!map[o]) map[o]={total:0,done:0,going:0};
+    map[o].total++;
+    if (r.status==='完成結案') map[o].done++;
+    else if (r.status==='執行中') map[o].going++;
+  });
+  const grid = document.getElementById('owner-grid');
+  grid.innerHTML = Object.entries(map).sort((a,b)=>b[1].total-a[1].total).map(([name,s])=>`
+    <div class="owner-card">
+      <div class="owner-name">${name}</div>
+      <div class="owner-num">${s.total}</div>
+      <div class="owner-lbl">負責場次</div>
+      <div class="owner-row">
+        <div><div class="ostat-val" style="color:var(--ok)">${s.done}</div><div class="ostat-lbl">完成</div></div>
+        <div><div class="ostat-val" style="color:#A16207">${s.going}</div><div class="ostat-lbl">執行中</div></div>
+        <div><div class="ostat-val">${s.total-s.done-s.going}</div><div class="ostat-lbl">待開課</div></div>
+      </div>
+    </div>`).join('');
+}
+
+function buildFilters() {
+  const companies = [...new Set(allData.map(r=>r.company).filter(Boolean))].sort();
+  const owners    = [...new Set(allData.map(r=>r.owner).filter(Boolean))].sort();
+  const fc = document.getElementById('f-company');
+  const fo = document.getElementById('f-owner');
+  companies.forEach(c=>{ const o=document.createElement('option'); o.value=o.textContent=c; fc.appendChild(o); });
+  owners.forEach(o=>{ const el=document.createElement('option'); el.value=el.textContent=o; fo.appendChild(el); });
+}
+
+function renderAll() {
+  const fc = document.getElementById('f-company').value;
+  const fo = document.getElementById('f-owner').value;
+  const fs = document.getElementById('f-status').value;
+  const fq = document.getElementById('f-search').value.toLowerCase();
+  const filtered = allData.filter(r=>{
+    if (!r.company) return false;
+    if (fc && r.company!==fc) return false;
+    if (fo && r.owner!==fo) return false;
+    if (fs && r.status!==fs) return false;
+    if (fq && !r.course.toLowerCase().includes(fq) && !r.company.toLowerCase().includes(fq)) return false;
+    return true;
+  });
+  document.getElementById('result-count').textContent = `共 ${filtered.length} 筆`;
+  const tbody = document.getElementById('all-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML='<tr><td colspan="7" class="empty">沒有符合條件的資料</td></tr>'; return;
+  }
+  tbody.innerHTML = filtered.map(r=>`<tr>
+    <td>${r.company}</td>
+    <td>${r.course||'—'}</td>
+    <td>${r.session||'—'}</td>
+    <td>${r.date||'—'}</td>
+    <td>${r.location||'—'}</td>
+    <td>${r.owner||'—'}</td>
+    <td>${badge(r.status)}</td>
+  </tr>`).join('');
+}
+
+loadData();
+</script>
+</body>
+</html>
