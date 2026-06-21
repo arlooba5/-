@@ -10,7 +10,7 @@
 body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale);color:var(--text);font-size:14px}
 .topbar{background:var(--dark);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-title{color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
-.topbar-title span{background:var(--green);color:#fff;font-size:11px;padding:2px 10px;border-radius:4px;font-weight:600}
+.topbar-title span{background:var(--green);color:#fff;font-size:11px;padding:2px 10px;border-radius:4px}
 .last-update{color:rgba(255,255,255,.5);font-size:12px}
 .container{max-width:900px;margin:0 auto;padding:20px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
@@ -21,36 +21,55 @@ body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale
 .stat.alert::before{background:#DC2626}
 .stat-val{font-size:26px;font-weight:700;color:var(--dark)}
 .stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
-.section-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
+.section-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
 .alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
 .alert-item{border-radius:8px;padding:12px 14px;border-left:4px solid #D97706;background:#FFFBEB}
-.alert-item .head{font-weight:700;font-size:13px;margin-bottom:3px}
-.alert-item .meta{color:var(--muted);font-size:12px}
+.alert-head{font-weight:700;font-size:13px;margin-bottom:3px}
+.alert-meta{color:var(--muted);font-size:12px}
 .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-.filter-bar select,.filter-bar input{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;background:#fff;outline:none;color:var(--text)}
-.filter-bar select:focus,.filter-bar input:focus{border-color:var(--green)}
+.filter-bar select,.filter-bar input[type=text]{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;background:#fff;outline:none}
 .count{margin-left:auto;font-size:12px;color:var(--muted)}
-.course-list{display:flex;flex-direction:column;gap:10px}
-.course-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;transition:border-color .2s}
+.course-list{display:flex;flex-direction:column;gap:12px}
+
+/* COURSE CARD */
+.course-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s}
 .course-card:hover{border-color:var(--green)}
-.course-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px}
+.course-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
 .course-name{font-weight:700;font-size:14px;color:var(--dark);line-height:1.4}
 .course-company{font-size:12px;color:var(--muted);margin-top:2px}
-.course-meta{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
-.course-meta span{display:flex;align-items:center;gap:3px}
+.course-session{font-size:12px;color:var(--muted);margin-top:2px;font-weight:600}
+
+/* EDITABLE FIELDS */
+.edit-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.edit-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+.edit-field input,.edit-field textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--pale);outline:none;transition:border-color .2s,background .2s}
+.edit-field input:focus,.edit-field textarea:focus{border-color:var(--green);background:#fff}
+.edit-field textarea{resize:vertical;min-height:56px}
+.students-field{grid-column:1/-1}
+.save-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.btn-save{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
+.btn-save:hover{background:#4a7a1a}
+.btn-save:disabled{background:#ccc;cursor:not-allowed}
+.save-msg{font-size:12px;font-weight:600}
+.save-msg.ok{color:var(--green)}
+.save-msg.err{color:#DC2626}
+
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .badge-done{background:#DCFCE7;color:#15803D}
 .badge-going{background:#FEF9C3;color:#A16207}
 .badge-sign{background:#F3E8FF;color:#7E22CE}
 .badge-confirm{background:#DBEAFE;color:#1D4ED8}
-.badge-eval{background:#E0F2FE;color:#0369A1}
 .badge-empty{background:#F3F4F6;color:#6B7280}
 .badge-pause{background:#FEE2E2;color:#B91C1C}
+
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:60px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:48px;color:var(--muted);font-size:13px}
-.error{text-align:center;padding:48px;color:#B91C1C;font-size:13px}
-@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .edit-row{grid-template-columns:1fr 1fr}
+  .students-field{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -67,7 +86,7 @@ body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale
   <div id="loading"><div class="spinner"></div></div>
   <div id="main" style="display:none">
 
-    <div class="stats">
+    <div class="stats" style="margin-bottom:24px">
       <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">負責場次</div></div>
       <div class="stat ok"><div class="stat-val" id="s-done">—</div><div class="stat-lbl">完成結案</div></div>
       <div class="stat warn"><div class="stat-val" id="s-going">—</div><div class="stat-lbl">執行中</div></div>
@@ -87,7 +106,6 @@ body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale
         <option>執行中</option><option>完成結案</option><option>暫緩</option><option>取消</option>
       </select>
       <select id="f-company" onchange="render()"><option value="">全部公司</option></select>
-      <input type="text" id="f-search" placeholder="搜尋課程..." oninput="render()" style="min-width:160px">
       <span class="count" id="count"></span>
     </div>
     <div class="course-list" id="courseList"></div>
@@ -95,8 +113,8 @@ body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwgqyaipRkpHcVG6muwvBA3ypvpffwzCPR3w1i1n9Pko0ooZEh-PXrQX2Jo8efR79U/exec';
-const MY_NAME = '大師兄';
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbwgqyaipRkpHcVG6muwvBA3ypvpffwzCPR3w1i1n9Pko0ooZEh-PXrQX2Jo8efR79U/exec';
+const MY_NAME  = '大師兄';
 let myData = [];
 
 function parseDate(str) {
@@ -108,12 +126,12 @@ function parseDate(str) {
   if (m2) return new Date(2025,+m2[1]-1,+m2[2]);
   return null;
 }
-function daysDiff(d){ const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000); }
+function daysDiff(d){const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
 function badge(s){
-  const m={'完成結案':'badge-done','執行中':'badge-going','合約簽訂':'badge-sign',
-    '收件確認':'badge-confirm','評估中':'badge-eval','暫緩':'badge-pause','取消':'badge-pause'};
+  const m={'完成結案':'badge-done','執行中':'badge-going','合約簽訂':'badge-sign','收件確認':'badge-confirm','評估中':'badge-confirm','暫緩':'badge-pause','取消':'badge-pause'};
   return `<span class="badge ${m[s]||'badge-empty'}">${s||'未設定'}</span>`;
 }
+function esc(s){return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
 fetch(GAS_URL+'?t='+Date.now())
   .then(r=>r.json())
@@ -122,15 +140,13 @@ fetch(GAS_URL+'?t='+Date.now())
     const companies=[...new Set(myData.map(r=>r.company).filter(Boolean))].sort();
     const fc=document.getElementById('f-company');
     companies.forEach(c=>{const o=document.createElement('option');o.value=o.textContent=c;fc.appendChild(o);});
-    renderStats();
-    renderAlerts();
-    render();
+    renderStats(); renderAlerts(); render();
     document.getElementById('loading').style.display='none';
     document.getElementById('main').style.display='block';
     document.getElementById('lastUpdate').textContent='更新：'+new Date().toLocaleTimeString('zh-TW');
   })
   .catch(()=>{
-    document.getElementById('loading').innerHTML='<div class="error">⚠️ 無法載入資料，請稍後再試</div>';
+    document.getElementById('loading').innerHTML='<div style="text-align:center;padding:48px;color:#B91C1C">⚠️ 無法載入資料，請稍後再試</div>';
   });
 
 function renderStats(){
@@ -148,10 +164,8 @@ function renderStats(){
 }
 
 function renderAlerts(){
-  const items=myData.filter(r=>{
-    const d=parseDate(r.date);
-    return d&&daysDiff(d)>=0&&daysDiff(d)<=7;
-  }).sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  const items=myData.filter(r=>{const d=parseDate(r.date);return d&&daysDiff(d)>=0&&daysDiff(d)<=7;})
+    .sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   const sec=document.getElementById('alertSection');
   if(!items.length){sec.style.display='none';return;}
   sec.style.display='block';
@@ -160,8 +174,8 @@ function renderAlerts(){
     const diff=daysDiff(d);
     const label=diff===0?'🟢 今日開課':`⚠️ ${diff} 天後開課`;
     return `<div class="alert-item">
-      <div class="head">${label}｜${r.company}</div>
-      <div class="meta">${r.course} · ${r.session} · ${r.date||'—'} ${r.time?'· '+r.time:''}</div>
+      <div class="alert-head">${label}｜${r.company}</div>
+      <div class="alert-meta">${r.course} · ${r.session} · ${r.date||'—'} ${r.time?'· '+r.time:''}</div>
     </div>`;
   }).join('');
 }
@@ -169,33 +183,83 @@ function renderAlerts(){
 function render(){
   const fs=document.getElementById('f-status').value;
   const fc=document.getElementById('f-company').value;
-  const fq=document.getElementById('f-search').value.toLowerCase();
   const filtered=myData.filter(r=>{
     if(fs&&r.status!==fs) return false;
     if(fc&&r.company!==fc) return false;
-    if(fq&&!r.course.toLowerCase().includes(fq)&&!r.company.toLowerCase().includes(fq)) return false;
     return true;
   });
   document.getElementById('count').textContent='共 '+filtered.length+' 筆';
   const list=document.getElementById('courseList');
   if(!filtered.length){list.innerHTML='<div class="empty">沒有符合條件的課程</div>';return;}
-  list.innerHTML=filtered.map(r=>`
-    <div class="course-card">
+  list.innerHTML=filtered.map((r,i)=>`
+    <div class="course-card" id="card-${i}">
       <div class="course-head">
         <div>
-          <div class="course-name">${r.course||'—'}</div>
-          <div class="course-company">${r.company}</div>
+          <div class="course-name">${esc(r.course)||'—'}</div>
+          <div class="course-company">${esc(r.company)}</div>
+          <div class="course-session">🔢 ${esc(r.session)||'—'}</div>
         </div>
         ${badge(r.status)}
       </div>
-      <div class="course-meta">
-        <span>🔢 ${r.session||'—'}</span>
-        <span>📅 ${r.date||'未填'}</span>
-        <span>⏰ ${r.time||'未填'}</span>
-        <span>📍 ${r.location||'未填'}</span>
-        <span>👥 ${r.students?r.students.split(',').length+'人':'未填'}</span>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>📅 開課日期</label>
+          <input type="text" id="date-${i}" value="${esc(r.date)}" placeholder="2025/10/15">
+        </div>
+        <div class="edit-field">
+          <label>⏰ 開課時間</label>
+          <input type="text" id="time-${i}" value="${esc(r.time)}" placeholder="09:00-12:00">
+        </div>
+        <div class="edit-field students-field">
+          <label>👥 學員姓名（逗號分隔）</label>
+          <textarea id="students-${i}" placeholder="王小明, 陳美玲, 李大華">${esc(r.students)}</textarea>
+        </div>
+      </div>
+      <div class="save-row">
+        <button class="btn-save" onclick="save(${i},'${esc(r.company)}','${esc(r.course)}','${esc(r.session)}')">💾 儲存</button>
+        <span class="save-msg" id="msg-${i}"></span>
       </div>
     </div>`).join('');
+}
+
+function save(i, company, course, session) {
+  const btn = document.querySelector(`#card-${i} .btn-save`);
+  const msg = document.getElementById('msg-'+i);
+  const date     = document.getElementById('date-'+i).value.trim();
+  const time     = document.getElementById('time-'+i).value.trim();
+  const students = document.getElementById('students-'+i).value.trim();
+
+  btn.disabled = true;
+  btn.textContent = '儲存中...';
+  msg.textContent = '';
+  msg.className = 'save-msg';
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ company, course, session, date, time, students }),
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    if(res.success){
+      msg.textContent = '✅ 已儲存！';
+      msg.className = 'save-msg ok';
+      // 更新本地資料
+      const item = myData.find(r=>r.company===company&&r.course===course&&r.session===session);
+      if(item){ item.date=date; item.time=time; item.students=students; }
+      renderStats(); renderAlerts();
+    } else {
+      msg.textContent = '❌ 儲存失敗：' + (res.error||'未知錯誤');
+      msg.className = 'save-msg err';
+    }
+  })
+  .catch(()=>{
+    msg.textContent = '❌ 網路錯誤，請重試';
+    msg.className = 'save-msg err';
+  })
+  .finally(()=>{
+    btn.disabled = false;
+    btn.textContent = '💾 儲存';
+  });
 }
 </script>
 </body>
