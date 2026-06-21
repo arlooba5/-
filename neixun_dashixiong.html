@@ -123,7 +123,7 @@ function parseDate(str) {
   const m = s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if (m) return new Date(+m[1],+m[2]-1,+m[3]);
   const m2 = s.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
-  if (m2) return new Date(2025,+m2[1]-1,+m2[2]);
+  if (m2) return new Date(new Date().getFullYear(),+m2[1]-1,+m2[2]);
   return null;
 }
 function daysDiff(d){const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
