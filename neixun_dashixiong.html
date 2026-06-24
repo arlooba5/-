@@ -6,13 +6,13 @@
 <title>克斯內訓 - 大師兄</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--dark:#1A3A0F;--mid:#2D5A1E;--green:#639922;--light:#E8F4D9;--pale:#F4FAF0;--white:#FFFFFF;--border:#E0E8D8;--text:#1A2415;--muted:#6B7A6B;}
+:root{--dark:#1A3A0F;--mid:#2D5A1E;--green:#639922;--pale:#F4FAF0;--white:#FFFFFF;--border:#E0E8D8;--text:#1A2415;--muted:#6B7A6B;}
 body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale);color:var(--text);font-size:14px}
 .topbar{background:var(--dark);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-title{color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
 .topbar-title span{background:var(--green);color:#fff;font-size:11px;padding:2px 10px;border-radius:4px}
 .last-update{color:rgba(255,255,255,.5);font-size:12px}
-.container{max-width:1100px;margin:0 auto;padding:20px}
+.container{max-width:1200px;margin:0 auto;padding:20px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;position:relative;overflow:hidden}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mid)}
@@ -28,24 +28,25 @@ body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale
 .alert-meta{color:var(--muted);font-size:12px}
 .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
 .filter-bar select{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;background:#fff;outline:none}
+.filter-check{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;user-select:none}
+.filter-check input{cursor:pointer;width:14px;height:14px;accent-color:var(--green)}
 .count{margin-left:auto;font-size:12px;color:var(--muted)}
-
-/* TABLE */
 .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--white)}
-table{width:100%;border-collapse:collapse;min-width:800px}
+table{width:100%;border-collapse:collapse;min-width:900px}
 thead tr{background:var(--dark);color:#fff}
 thead th{padding:10px 10px;font-size:12px;font-weight:600;text-align:left;white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--pale)}
+tbody tr.incomplete{background:#FFFBEB}
 tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
-.td-company{color:var(--muted);font-size:12px;min-width:100px;max-width:130px;word-break:break-all}
-.td-course{font-weight:600;color:var(--dark);min-width:140px}
+.td-company{color:var(--muted);font-size:12px;min-width:90px;max-width:120px;word-break:break-all}
+.td-course{font-weight:600;color:var(--dark);min-width:130px}
 .td-session{font-size:11px;color:var(--muted)}
-.td-inp{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:transparent;outline:none;transition:border-color .2s,background .2s;min-width:70px}
+.td-inp{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:transparent;outline:none;transition:border-color .2s,background .2s;min-width:65px}
 .td-inp:hover{border-color:var(--border);background:#fff}
 .td-inp:focus{border-color:var(--green);background:#fff}
-.td-students{min-width:120px}
+.td-inp.missing{border-color:#FCA5A5;background:#FEF2F2}
 .btn-save{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 .btn-save:hover{background:#4a7a1a}
 .btn-save:disabled{background:#ccc;cursor:not-allowed}
@@ -75,9 +76,9 @@ tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
   <div id="main" style="display:none">
     <div class="stats" style="margin-bottom:24px">
       <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">負責場次</div></div>
-      <div class="stat ok"><div class="stat-val" id="s-done">—</div><div class="stat-lbl">完成結案</div></div>
+      <div class="stat alert"><div class="stat-val" id="s-pending">—</div><div class="stat-lbl">待完成</div></div>
       <div class="stat warn"><div class="stat-val" id="s-going">—</div><div class="stat-lbl">執行中</div></div>
-      <div class="stat alert"><div class="stat-val" id="s-week">—</div><div class="stat-lbl">本週開課</div></div>
+      <div class="stat ok"><div class="stat-val" id="s-week">—</div><div class="stat-lbl">本週開課</div></div>
     </div>
     <div id="alertSection" style="display:none;margin-bottom:24px">
       <div class="section-title">⚠️ 本週需關注</div>
@@ -91,6 +92,7 @@ tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
         <option>執行中</option><option>完成結案</option><option>暫緩</option><option>取消</option>
       </select>
       <select id="f-company" onchange="render()"><option value="">全部公司</option></select>
+      <label class="filter-check"><input type="checkbox" id="f-incomplete" onchange="render()"> 只看未完整填寫</label>
       <span class="count" id="count"></span>
     </div>
     <div class="tbl-wrap">
@@ -100,9 +102,9 @@ tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
             <th>公司</th>
             <th>課程／場次</th>
             <th>狀態</th>
-            <th>講師</th>
             <th>開課日期</th>
             <th>開課時間</th>
+            <th>講師</th>
             <th>學員姓名（逗號分隔）</th>
             <th></th>
           </tr>
@@ -127,6 +129,7 @@ function parseDate(str){
   return null;
 }
 function daysDiff(d){const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function isIncomplete(r){return !r.date||!r.lecturer||!r.students;}
 function badge(s){
   const m={'完成結案':'badge-done','執行中':'badge-going','合約簽訂':'badge-sign','收件確認':'badge-confirm','評估中':'badge-confirm','暫緩':'badge-pause','取消':'badge-pause'};
   return `<span class="badge ${m[s]||'badge-empty'}">${s||'未設定'}</span>`;
@@ -150,15 +153,15 @@ fetch(GAS_URL+'?t='+Date.now())
   });
 
 function renderStats(){
-  let done=0,going=0,week=0;
+  let pending=0,going=0,week=0;
   myData.forEach(r=>{
-    if(r.status==='完成結案') done++;
+    if(r.status!=='完成結案'&&r.status!=='取消'&&r.status!=='暫緩') pending++;
     if(r.status==='執行中') going++;
     const d=parseDate(r.date);
     if(d&&daysDiff(d)>=0&&daysDiff(d)<=7) week++;
   });
   document.getElementById('s-total').textContent=myData.length;
-  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-pending').textContent=pending;
   document.getElementById('s-going').textContent=going;
   document.getElementById('s-week').textContent=week;
 }
@@ -180,23 +183,25 @@ function renderAlerts(){
 function render(){
   const fs=document.getElementById('f-status').value;
   const fc=document.getElementById('f-company').value;
+  const fi=document.getElementById('f-incomplete').checked;
   const filtered=myData.filter(r=>{
     if(fs&&r.status!==fs) return false;
     if(fc&&r.company!==fc) return false;
+    if(fi&&!isIncomplete(r)) return false;
     return true;
   });
   document.getElementById('count').textContent='共 '+filtered.length+' 筆';
   const list=document.getElementById('courseList');
   if(!filtered.length){list.innerHTML='<tr><td colspan="8"><div class="empty">沒有符合條件的課程</div></td></tr>';return;}
   list.innerHTML=filtered.map((r,i)=>`
-    <tr id="row-${i}">
+    <tr id="row-${i}"${isIncomplete(r)?' class="incomplete"':''}>
       <td class="td-company">${esc(r.company)}</td>
       <td class="td-course">${esc(r.course)}<br><span class="td-session">${esc(r.session)}</span></td>
       <td>${badge(r.status)}</td>
-      <td><input class="td-inp" id="lec-${i}" value="${esc(r.lecturer||'')}" placeholder="講師姓名"></td>
-      <td><input class="td-inp" id="date-${i}" value="${esc(r.date||'')}" placeholder="2026/07/01"></td>
+      <td><input class="td-inp${!r.date?' missing':''}" id="date-${i}" value="${esc(r.date||'')}" placeholder="2026/07/01"></td>
       <td><input class="td-inp" id="time-${i}" value="${esc(r.time||'')}" placeholder="09:00-12:00"></td>
-      <td class="td-students"><input class="td-inp" id="students-${i}" value="${esc(r.students||'')}" placeholder="王小明,陳美玲"></td>
+      <td><input class="td-inp${!r.lecturer?' missing':''}" id="lec-${i}" value="${esc(r.lecturer||'')}" placeholder="講師姓名"></td>
+      <td><input class="td-inp${!r.students?' missing':''}" id="students-${i}" value="${esc(r.students||'')}" placeholder="王小明,陳美玲"></td>
       <td style="white-space:nowrap">
         <button class="btn-save" onclick="save(${i},'${esc(r.company)}','${esc(r.course)}','${esc(r.session)}')">💾</button>
         <span class="save-msg" id="msg-${i}"></span>
@@ -207,19 +212,19 @@ function render(){
 function save(i,company,course,session){
   const btn=document.querySelector(`#row-${i} .btn-save`);
   const msg=document.getElementById('msg-'+i);
-  const lecturer=document.getElementById('lec-'+i).value.trim();
   const date=document.getElementById('date-'+i).value.trim();
   const time=document.getElementById('time-'+i).value.trim();
+  const lecturer=document.getElementById('lec-'+i).value.trim();
   const students=document.getElementById('students-'+i).value.trim();
   btn.disabled=true;btn.textContent='…';msg.textContent='';msg.className='save-msg';
-  fetch(GAS_URL,{method:'POST',body:JSON.stringify({company,course,session,lecturer,date,time,students})})
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify({company,course,session,date,time,lecturer,students})})
     .then(r=>r.json())
     .then(res=>{
       if(res.success){
         msg.textContent='✅';msg.className='save-msg ok';
         const item=myData.find(r=>r.company===company&&r.course===course&&r.session===session);
-        if(item){item.lecturer=lecturer;item.date=date;item.time=time;item.students=students;}
-        renderStats();renderAlerts();
+        if(item){item.date=date;item.time=time;item.lecturer=lecturer;item.students=students;}
+        renderStats();
       } else {msg.textContent='❌'+(res.error||'');msg.className='save-msg err';}
     })
     .catch(()=>{msg.textContent='❌網路錯誤';msg.className='save-msg err';})
