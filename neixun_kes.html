@@ -78,7 +78,7 @@ tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
       <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">負責場次</div></div>
       <div class="stat alert"><div class="stat-val" id="s-pending">—</div><div class="stat-lbl">待完成</div></div>
       <div class="stat warn"><div class="stat-val" id="s-going">—</div><div class="stat-lbl">執行中</div></div>
-      <div class="stat ok"><div class="stat-val" id="s-week">—</div><div class="stat-lbl">本週開課</div></div>
+      <div class="stat ok"><div class="stat-val" id="s-week">—</div><div class="stat-lbl">15天內開課</div></div>
     </div>
     <div id="alertSection" style="display:none;margin-bottom:24px">
       <div class="section-title">⚠️ 本週需關注</div>
@@ -158,7 +158,7 @@ function renderStats(){
     if(r.status!=='完成結案'&&r.status!=='取消'&&r.status!=='暫緩') pending++;
     if(r.status==='執行中') going++;
     const d=parseDate(r.date);
-    if(d&&daysDiff(d)>=0&&daysDiff(d)<=7) week++;
+    if(d&&daysDiff(d)>=0&&daysDiff(d)<=15) week++;
   });
   document.getElementById('s-total').textContent=myData.length;
   document.getElementById('s-pending').textContent=pending;
@@ -167,7 +167,7 @@ function renderStats(){
 }
 
 function renderAlerts(){
-  const items=myData.filter(r=>{const d=parseDate(r.date);return d&&daysDiff(d)>=0&&daysDiff(d)<=7;})
+  const items=myData.filter(r=>{const d=parseDate(r.date);return d&&daysDiff(d)>=0&&daysDiff(d)<=15;})
     .sort((a,b)=>parseDate(a.date)-parseDate(b.date));
   const sec=document.getElementById('alertSection');
   if(!items.length){sec.style.display='none';return;}
