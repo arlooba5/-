@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>特對就促課程控管儀表板</title>
+<style>
+  :root {
+    --g1:#1a3a0f;--g2:#2d5a1a;--g3:#639922;--g4:#9ec96a;--g5:#eaf3de;
+    --amber:#faeeda;--amber-t:#854f0b;--coral:#faece7;--coral-t:#993c1d;
+    --blue:#e6f1fb;--blue-t:#185fa5;--teal:#e1f5ee;--teal-t:#0f6e56;
+    --purple:#f0eaff;--purple-t:#5b21b6;--pink:#fce7f3;--pink-t:#9d174d;
+    --border:#d4e6c0;--muted:#6b7280;--bg:#f4f8f0;--ink:#1a1a1a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Microsoft JhengHei','PingFang TC',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+
+  .header{background:var(--g1);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+  .header h1{font-size:16px;font-weight:600;}
+  .header .sub{font-size:11px;color:var(--g4);margin-top:2px;}
+  .refresh-btn{background:var(--g3);color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;padding:14px 20px;}
+  .stat{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid var(--border);}
+  .stat .n{font-size:26px;font-weight:700;color:var(--g1);}
+  .stat .l{font-size:11px;color:var(--muted);margin-top:2px;}
+  .stat.warn .n{color:var(--coral-t);}
+  .stat.ok   .n{color:var(--teal-t);}
+  .stat.info .n{color:var(--blue-t);}
+
+  .tabs{display:flex;gap:4px;padding:0 20px;border-bottom:2px solid var(--border);}
+  .tab{padding:9px 16px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);border:1px solid transparent;border-bottom:none;}
+  .tab.active{background:#fff;color:var(--g1);border-color:var(--border);border-bottom-color:#fff;margin-bottom:-2px;}
+
+  .tab-content{display:none;padding:14px 20px;}
+  .tab-content.active{display:block;}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+  .filters select,.filters input{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;}
+  .filters input{width:160px;}
+
+  .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:#fff;}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+  thead th{background:var(--g1);color:#fff;padding:9px 10px;text-align:left;white-space:nowrap;font-weight:500;}
+  tbody tr{border-bottom:1px solid #f0f0f0;}
+  tbody tr:hover{background:var(--g5);}
+  tbody tr:last-child{border-bottom:none;}
+  td{padding:9px 10px;vertical-align:middle;}
+  td.wrap{white-space:normal;max-width:200px;}
+
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap;}
+  .type-特對就促{background:var(--teal);color:var(--teal-t);}
+  .type-銀髮就促{background:var(--blue);color:var(--blue-t);}
+  .type-銀髮3C{background:var(--purple);color:var(--purple-t);}
+  .type-團體{background:var(--amber);color:var(--amber-t);}
+  .type-職場參訪{background:var(--pink);color:var(--pink-t);}
+  .type-就促講座{background:var(--g5);color:var(--g2);}
+
+  .no-teacher{color:var(--coral-t);font-weight:600;}
+  .today-row{background:#fff9e6 !important;}
+  .past-row td{color:#aaa;}
+
+  .alert-list{display:flex;flex-direction:column;gap:8px;}
+  .alert-card{background:#fff;border-radius:8px;padding:11px 14px;border-left:4px solid var(--coral-t);font-size:13px;}
+  .alert-card .cn{font-weight:600;margin-bottom:2px;}
+  .alert-card .cd{color:var(--muted);font-size:12px;}
+
+  .week-section{margin-bottom:20px;}
+  .week-title{font-size:13px;font-weight:600;color:var(--g1);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+  .empty{text-align:center;padding:28px;color:var(--muted);}
+  .loading{text-align:center;padding:40px;color:var(--muted);font-size:15px;}
+  .count{text-align:right;font-size:12px;color:var(--muted);padding:6px 2px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header h1">📋 特對就促課程控管儀表板</div>
+    <div class="sub" id="sub-date"></div>
+  </div>
+  <button class="refresh-btn" onclick="loadData()">🔄 重新整理</button>
+</div>
+
+<div id="loading" class="loading">載入中...</div>
+<div id="main" style="display:none;">
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="s-total">0</div><div class="l">總場次</div></div>
+    <div class="stat info"><div class="n" id="s-week">0</div><div class="l">本週課程</div></div>
+    <div class="stat warn"><div class="n" id="s-no-teacher">0</div><div class="l">未排講師</div></div>
+    <div class="stat ok"><div class="n" id="s-done">0</div><div class="l">已完課</div></div>
+    <div class="stat"><div class="n" id="s-upcoming">0</div><div class="l">待執行</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('week')">📅 本週提醒</div>
+    <div class="tab" onclick="switchTab('missing')">⚠️ 未排講師</div>
+    <div class="tab" onclick="switchTab('all')">📋 全部課程</div>
+  </div>
+
+  <!-- 本週 -->
+  <div class="tab-content active" id="tab-week">
+    <div class="week-section">
+      <div class="week-title">📌 本週課程</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>日期</th><th>類別</th><th>站別</th><th>單位</th><th>課程名稱</th><th>講師</th><th>時間</th></tr></thead>
+          <tbody id="tbody-week"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="week-section">
+      <div class="week-title">📅 下週預告</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>日期</th><th>類別</th><th>站別</th><th>單位</th><th>課程名稱</th><th>講師</th><th>時間</th></tr></thead>
+          <tbody id="tbody-next"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 未排講師 -->
+  <div class="tab-content" id="tab-missing">
+    <div class="alert-list" id="list-missing"></div>
+  </div>
+
+  <!-- 全部 -->
+  <div class="tab-content" id="tab-all">
+    <div class="filters">
+      <select id="f-type" onchange="renderAll()"><option value="">全部類別</option></select>
+      <select id="f-station" onchange="renderAll()"><option value="">全部站別</option></select>
+      <select id="f-teacher" onchange="renderAll()"><option value="">全部講師</option></select>
+      <input type="text" id="f-search" placeholder="搜尋課程、單位..." oninput="renderAll()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>日期</th><th>類別</th><th>站別</th><th>單位</th><th>對象</th><th>課程名稱</th><th>講師</th><th>時間</th><th>時數</th></tr></thead>
+        <tbody id="tbody-all"></tbody>
+      </table>
+    </div>
+    <div class="count" id="all-count"></div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwP_uohOnFEuEXuLvXInUbVtP3HzAs8Qbep_Y0JN0wQcjcvRp81bKCQNPmnlrkjzn0/exec';
+
+let allData = [];
+
+// 日期
+const d = new Date();
+const days = ['日','一','二','三','四','五','六'];
+document.getElementById('sub-date').textContent =
+  `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} 週${days[d.getDay()]}`;
+
+function loadData() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
+  fetch(API_URL)
+    .then(r => r.json())
+    .then(json => {
+      const rows = json['特定對象'] || [];
+      allData = rows.map(r => ({
+        type:    (r[0]||'').toString().trim(),
+        station: (r[1]||'').toString().trim(),
+        unit:    (r[2]||'').toString().trim(),
+        target:  (r[3]||'').toString().trim(),
+        hours:   r[4]||'',
+        name:    (r[5]||'').toString().split('\n')[0].trim(),
+        outline: (r[6]||'').toString().trim(),
+        teacher: (r[7]||'').toString().trim(),
+        dateRaw: r[8],
+        time:    (r[9]||'').toString().trim(),
+        date:    parseDate(r[8]),
+      })).filter(r => r.name && r.name !== '未排定' && r.date);
+      buildFilters();
+      renderStats();
+      renderWeek();
+      renderMissing();
+      renderAll();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+    })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = '❌ 載入失敗，請重新整理<br><small>' + err + '</small>';
+    });
+}
+
+function parseDate(val) {
+  if (!val) return null;
+  if (val instanceof Date || (typeof val === 'object')) {
+    try { const d = new Date(val); return isNaN(d)?null:d; } catch(e){return null;}
+  }
+  const s = val.toString().trim();
+  let m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})/);
+  if (m) return new Date(2026, +m[1]-1, +m[2]);
+  return null;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getWeekRange(offset=0) {
+  const now = new Date(), day = now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+  mon.setHours(0,0,0,0);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  return {start:mon, end:sun};
+}
+
+function inRange(date, range) {
+  return date && date >= range.start && date <= range.end;
+}
+
+function isPast(date) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return date && date < today;
+}
+
+function isToday(date) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tom = new Date(today); tom.setDate(today.getDate()+1);
+  return date && date >= today && date < tom;
+}
+
+function typeBadge(t) {
+  return `<span class="badge type-${t||'其他'}">${t||'其他'}</span>`;
+}
+
+function buildFilters() {
+  const types = [...new Set(allData.map(r=>r.type).filter(Boolean))].sort();
+  const stations = [...new Set(allData.map(r=>r.station).filter(Boolean))].sort();
+  const teachers = [...new Set(allData.map(r=>r.teacher).filter(Boolean))].sort();
+  const sel = (id, arr) => {
+    const el = document.getElementById(id);
+    arr.forEach(v => el.innerHTML += `<option value="${v}">${v}</option>`);
+  };
+  sel('f-type', types);
+  sel('f-station', stations);
+  sel('f-teacher', teachers);
+}
+
+function renderStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const week = getWeekRange(0);
+  document.getElementById('s-total').textContent = allData.length;
+  document.getElementById('s-week').textContent = allData.filter(r=>inRange(r.date,week)).length;
+  document.getElementById('s-no-teacher').textContent = allData.filter(r=>!r.teacher && !isPast(r.date)).length;
+  document.getElementById('s-done').textContent = allData.filter(r=>isPast(r.date)).length;
+  document.getElementById('s-upcoming').textContent = allData.filter(r=>r.date>=today).length;
+}
+
+function courseRow(r, showType=true) {
+  const pastCls = isPast(r.date) ? ' class="past-row"' : isToday(r.date) ? ' class="today-row"' : '';
+  const teacherHtml = r.teacher ? r.teacher : '<span class="no-teacher">⚠️ 未安排</span>';
+  return `<tr${pastCls}>
+    <td>${fmtDate(r.date)}</td>
+    ${showType ? `<td>${typeBadge(r.type)}</td>` : ''}
+    <td>${r.station||'—'}</td>
+    <td>${r.unit||'—'}</td>
+    <td class="wrap">${r.name}</td>
+    <td>${teacherHtml}</td>
+    <td>${r.time||'—'}</td>
+    ${!showType ? `<td>${r.target||'—'}</td><td>${r.hours||'—'}</td>` : ''}
+  </tr>`;
+}
+
+function renderWeek() {
+  const w0 = getWeekRange(0), w1 = getWeekRange(1);
+  const thisWeek = allData.filter(r=>inRange(r.date,w0)).sort((a,b)=>a.date-b.date);
+  const nextWeek = allData.filter(r=>inRange(r.date,w1)).sort((a,b)=>a.date-b.date);
+
+  const tw = document.getElementById('tbody-week');
+  tw.innerHTML = thisWeek.length
+    ? thisWeek.map(r=>`<tr${isToday(r.date)?' class="today-row"':''}>
+        <td>${fmtDate(r.date)}</td><td>${typeBadge(r.type)}</td>
+        <td>${r.station||'—'}</td><td>${r.unit||'—'}</td>
+        <td class="wrap">${r.name}</td>
+        <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
+        <td>${r.time||'—'}</td></tr>`).join('')
+    : '<tr><td colspan="7" class="empty">本週無課程</td></tr>';
+
+  const tn = document.getElementById('tbody-next');
+  tn.innerHTML = nextWeek.length
+    ? nextWeek.map(r=>`<tr>
+        <td>${fmtDate(r.date)}</td><td>${typeBadge(r.type)}</td>
+        <td>${r.station||'—'}</td><td>${r.unit||'—'}</td>
+        <td class="wrap">${r.name}</td>
+        <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
+        <td>${r.time||'—'}</td></tr>`).join('')
+    : '<tr><td colspan="7" class="empty">下週無課程</td></tr>';
+}
+
+function renderMissing() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const missing = allData.filter(r=>!r.teacher && r.date>=today).sort((a,b)=>a.date-b.date);
+  const el = document.getElementById('list-missing');
+  el.innerHTML = missing.length
+    ? missing.map(r=>`<div class="alert-card">
+        <div class="cn">${r.name}</div>
+        <div class="cd">📅 ${fmtDate(r.date)} ｜ 📍 ${r.station} ${r.unit} ｜ ${typeBadge(r.type)}</div>
+      </div>`).join('')
+    : '<div class="empty">✅ 所有即將到來的課程均已安排講師</div>';
+}
+
+function renderAll() {
+  const ft = document.getElementById('f-type').value;
+  const fs = document.getElementById('f-station').value;
+  const fth = document.getElementById('f-teacher').value;
+  const fq = document.getElementById('f-search').value.toLowerCase();
+  const filtered = allData.filter(r => {
+    if (ft && r.type !== ft) return false;
+    if (fs && r.station !== fs) return false;
+    if (fth && r.teacher !== fth) return false;
+    if (fq && ![r.name, r.unit, r.teacher, r.target].join(' ').toLowerCase().includes(fq)) return false;
+    return true;
+  }).sort((a,b)=>a.date-b.date);
+
+  const tb = document.getElementById('tbody-all');
+  tb.innerHTML = filtered.length
+    ? filtered.map(r => {
+        const pastCls = isPast(r.date) ? ' class="past-row"' : isToday(r.date) ? ' class="today-row"' : '';
+        return `<tr${pastCls}>
+          <td>${fmtDate(r.date)}</td>
+          <td>${typeBadge(r.type)}</td>
+          <td>${r.station||'—'}</td>
+          <td>${r.unit||'—'}</td>
+          <td>${r.target||'—'}</td>
+          <td class="wrap">${r.name}</td>
+          <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
+          <td>${r.time||'—'}</td>
+          <td>${r.hours||'—'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9" class="empty">沒有符合條件的資料</td></tr>';
+
+  document.getElementById('all-count').textContent = `共 ${filtered.length} 筆`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  const tabs = ['week','missing','all'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+loadData();
+</script>
+</body>
+</html>
