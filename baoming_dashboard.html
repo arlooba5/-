@@ -119,7 +119,7 @@
     <div class="section-title">📅 即將開課（15天內）</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>友軍</th></tr></thead>
         <tbody id="tbody-soon"></tbody>
       </table>
     </div>
@@ -162,7 +162,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>聯絡電話</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>聯絡電話</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>友軍</th></tr></thead>
         <tbody id="tbody-course"></tbody>
       </table>
     </div>
@@ -184,7 +184,7 @@
         <option value="未繳">未繳</option>
       </select>
       <select id="filter-owner" onchange="renderAll()">
-        <option value="">全部介紹人</option>
+        <option value="">全部友軍</option>
         <option value="佑妮">佑妮</option>
         <option value="大師兄">大師兄</option>
         <option value="克斯">克斯</option>
@@ -192,11 +192,11 @@
       <select id="filter-all-course" onchange="renderAll()">
         <option value="">全部課程</option>
       </select>
-      <input type="text" id="filter-search" placeholder="搜尋公司、學員、介紹人..." oninput="renderAll()">
+      <input type="text" id="filter-search" placeholder="搜尋公司、學員、友軍..." oninput="renderAll()">
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th><th>報名日期</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>友軍</th><th>報名日期</th></tr></thead>
         <tbody id="tbody-all"></tbody>
       </table>
     </div>
@@ -432,7 +432,7 @@ function renderTodo() {
     ? '<div class="empty">✅ 沒有未繳費學員</div>'
     : unpaid.map(r=>`<div class="alert-card">
         <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
-        <div class="detail">📚 ${r.課程名稱||'—'} ｜ 📅 ${r.開課日期||'—'} ｜ 介紹人：${r.負責人||'—'}</div></div>
+        <div class="detail">📚 ${r.課程名稱||'—'} ｜ 📅 ${r.開課日期||'—'} ｜ 友軍：${r.負責人||'—'}</div></div>
         <span class="badge badge-coral">未繳費</span></div>`).join('');
 
   const noEmail = allData.filter(r => r.Email && !r.確認信已發);
@@ -440,7 +440,7 @@ function renderTodo() {
     ? '<div class="empty">✅ 確認信都已發送</div>'
     : noEmail.map(r=>`<div class="alert-card no-email">
         <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
-        <div class="detail">📧 ${r.Email} ｜ 📚 ${r.課程名稱||'—'} ｜ 介紹人：${r.負責人||'—'}</div></div>
+        <div class="detail">📧 ${r.Email} ｜ 📚 ${r.課程名稱||'—'} ｜ 友軍：${r.負責人||'—'}</div></div>
         <span class="badge badge-blue">待發信</span></div>`).join('');
 }
 
