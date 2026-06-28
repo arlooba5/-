@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>克斯內訓 - 佑妮</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--dark:#1A3A0F;--mid:#2D5A1E;--green:#639922;--pale:#F4FAF0;--white:#FFFFFF;--border:#E0E8D8;--text:#1A2415;--muted:#6B7A6B;}
+body{font-family:'Microsoft JhengHei',system-ui,sans-serif;background:var(--pale);color:var(--text);font-size:14px}
+.topbar{background:var(--dark);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px}
+.topbar-title span{background:var(--green);color:#fff;font-size:11px;padding:2px 10px;border-radius:4px}
+.last-update{color:rgba(255,255,255,.5);font-size:12px}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mid)}
+.stat.ok::before{background:var(--green)}
+.stat.warn::before{background:#D97706}
+.stat.alert::before{background:#DC2626}
+.stat-val{font-size:26px;font-weight:700;color:var(--dark)}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600;letter-spacing:.3px}
+.section-title{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px}
+.alert-item{border-radius:8px;padding:12px 14px;border-left:4px solid #D97706;background:#FFFBEB}
+.alert-head{font-weight:700;font-size:13px;margin-bottom:3px}
+.alert-meta{color:var(--muted);font-size:12px}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-bar select{border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;background:#fff;outline:none}
+.filter-check{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;user-select:none}
+.filter-check input{cursor:pointer;width:14px;height:14px;accent-color:var(--green)}
+.count{margin-left:auto;font-size:12px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--white)}
+table{width:100%;border-collapse:collapse;min-width:950px}
+thead tr{background:var(--dark);color:#fff}
+thead th{padding:10px;font-size:12px;font-weight:600;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--pale)}
+tbody tr.incomplete{background:#FFFBEB}
+tbody td{padding:6px 8px;vertical-align:middle;font-size:13px}
+.td-company{color:var(--muted);font-size:12px;min-width:90px;max-width:120px;word-break:break-all}
+.td-course{font-weight:600;color:var(--dark);min-width:130px}
+.td-session{font-size:11px;color:var(--muted)}
+.td-inp{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:transparent;outline:none;transition:border-color .2s,background .2s;min-width:65px}
+.td-inp:hover{border-color:var(--border);background:#fff}
+.td-inp:focus{border-color:var(--green);background:#fff}
+.td-inp.missing{border-color:#FCA5A5;background:#FEF2F2}
+.td-sel{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:13px;font-family:inherit;background:#fff;outline:none;min-width:80px}
+.td-sel:focus{border-color:var(--green)}
+.btn-save{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-save:hover{background:#4a7a1a}
+.btn-save:disabled{background:#ccc;cursor:not-allowed}
+.save-msg{font-size:11px;font-weight:600;white-space:nowrap}
+.save-msg.ok{color:var(--green)}
+.save-msg.err{color:#DC2626}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-done{background:#DCFCE7;color:#15803D}
+.badge-reported{background:#DBEAFE;color:#1D4ED8}
+.badge-empty{background:#F3F4F6;color:#6B7280}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin:60px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:13px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-title">📋 克斯內訓控管<span>佑妮</span></div>
+  <span class="last-update" id="lastUpdate">載入中...</span>
+</div>
+<div class="container">
+  <div id="loading"><div class="spinner"></div></div>
+  <div id="main" style="display:none">
+    <div class="stats" style="margin-bottom:24px">
+      <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">負責場次</div></div>
+      <div class="stat alert"><div class="stat-val" id="s-pending">—</div><div class="stat-lbl">待完成</div></div>
+      <div class="stat warn"><div class="stat-val" id="s-going">—</div><div class="stat-lbl">已登錄</div></div>
+      <div class="stat ok"><div class="stat-val" id="s-week">—</div><div class="stat-lbl">15天內開課</div></div>
+    </div>
+    <div id="alertSection" style="display:none;margin-bottom:24px">
+      <div class="section-title">⚠️ 15天內需關注</div>
+      <div class="alert-list" id="alertList"></div>
+    </div>
+    <div class="section-title">📚 我的課程</div>
+    <div class="filter-bar">
+      <select id="f-status" onchange="render()">
+        <option value="">全部狀態</option>
+        <option>已登錄</option><option>已回報</option>
+      </select>
+      <select id="f-company" onchange="render()"><option value="">全部公司</option></select>
+      <label class="filter-check"><input type="checkbox" id="f-incomplete" onchange="render()"> 僅顯示尚缺資料課程</label>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>課程／場次</th>
+            <th>狀態</th>
+            <th>開課日期</th>
+            <th>開課時間</th>
+            <th>講師</th>
+            <th>學員姓名（逗號分隔）</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="courseList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbwgqyaipRkpHcVG6muwvBA3ypvpffwzCPR3w1i1n9Pko0ooZEh-PXrQX2Jo8efR79U/exec';
+const MY_NAME='佑妮';
+let myData=[];
+
+function parseDate(str){
+  if(!str) return null;
+  const s=str.toString().trim();
+  const m=s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3]);
+  const m2=s.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+  if(m2) return new Date(new Date().getFullYear(),+m2[1]-1,+m2[2]);
+  return null;
+}
+function daysDiff(d){const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function isIncomplete(r){return !r.date||!r.lecturer||!r.students;}
+function badge(s){
+  if(s==='已登錄') return '<span class="badge badge-done">已登錄</span>';
+  if(s==='已回報') return '<span class="badge badge-reported">已回報</span>';
+  return '<span class="badge badge-empty">未設定</span>';
+}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+fetch(GAS_URL+'?t='+Date.now())
+  .then(r=>r.json())
+  .then(data=>{
+    myData=data.filter(r=>r.owner===MY_NAME);
+    const companies=[...new Set(myData.map(r=>r.company).filter(Boolean))].sort();
+    const fc=document.getElementById('f-company');
+    companies.forEach(c=>{const o=document.createElement('option');o.value=o.textContent=c;fc.appendChild(o);});
+    renderStats();renderAlerts();render();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('main').style.display='block';
+    document.getElementById('lastUpdate').textContent='更新：'+new Date().toLocaleTimeString('zh-TW');
+  })
+  .catch(()=>{
+    document.getElementById('loading').innerHTML='<div style="text-align:center;padding:48px;color:#B91C1C">⚠️ 無法載入資料，請稍後再試</div>';
+  });
+
+function renderStats(){
+  let pending=0,going=0,week=0;
+  myData.forEach(r=>{
+    if(r.status!=='已回報') pending++;
+    if(r.status==='已登錄') going++;
+    const d=parseDate(r.date);
+    if(d&&daysDiff(d)>=0&&daysDiff(d)<=15) week++;
+  });
+  document.getElementById('s-total').textContent=myData.length;
+  document.getElementById('s-pending').textContent=pending;
+  document.getElementById('s-going').textContent=going;
+  document.getElementById('s-week').textContent=week;
+}
+
+function renderAlerts(){
+  const items=myData.filter(r=>{const d=parseDate(r.date);return d&&daysDiff(d)>=0&&daysDiff(d)<=15;})
+    .sort((a,b)=>parseDate(a.date)-parseDate(b.date));
+  const sec=document.getElementById('alertSection');
+  if(!items.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('alertList').innerHTML=items.map(r=>{
+    const d=parseDate(r.date);
+    const diff=daysDiff(d);
+    const label=diff===0?'🟢 今日開課':`⚠️ ${diff} 天後開課`;
+    return `<div class="alert-item"><div class="alert-head">${label}｜${r.company}</div><div class="alert-meta">${r.course} · ${r.session} · ${r.date||'—'} ${r.time?'· '+r.time:''}</div></div>`;
+  }).join('');
+}
+
+function render(){
+  const fs=document.getElementById('f-status').value;
+  const fc=document.getElementById('f-company').value;
+  const fi=document.getElementById('f-incomplete').checked;
+  const filtered=myData.filter(r=>{
+    if(fs&&r.status!==fs) return false;
+    if(fc&&r.company!==fc) return false;
+    if(fi&&!isIncomplete(r)) return false;
+    return true;
+  });
+  document.getElementById('count').textContent='共 '+filtered.length+' 筆';
+  const list=document.getElementById('courseList');
+  if(!filtered.length){list.innerHTML='<tr><td colspan="8"><div class="empty">沒有符合條件的課程</div></td></tr>';return;}
+  list.innerHTML=filtered.map((r,i)=>`
+    <tr id="row-${i}"${isIncomplete(r)?' class="incomplete"':''}>
+      <td class="td-company">${esc(r.company)}</td>
+      <td class="td-course">${esc(r.course)}<br><span class="td-session">${esc(r.session)}</span></td>
+      <td>
+        <select class="td-sel" id="status-${i}">
+          <option value=""${!r.status?' selected':''}>未設定</option>
+          <option value="已登錄"${r.status==='已登錄'?' selected':''}>已登錄</option>
+          <option value="已回報"${r.status==='已回報'?' selected':''}>已回報</option>
+        </select>
+      </td>
+      <td><input class="td-inp${!r.date?' missing':''}" id="date-${i}" value="${esc(r.date||'')}" placeholder="2026/07/01"></td>
+      <td><input class="td-inp" id="time-${i}" value="${esc(r.time||'')}" placeholder="09:00-12:00"></td>
+      <td><input class="td-inp${!r.lecturer?' missing':''}" id="lec-${i}" value="${esc(r.lecturer||'')}" placeholder="講師姓名"></td>
+      <td><input class="td-inp${!r.students?' missing':''}" id="students-${i}" value="${esc(r.students||'')}" placeholder="王小明,陳美玲"></td>
+      <td style="white-space:nowrap">
+        <button class="btn-save" onclick="save(${i},'${esc(r.company)}','${esc(r.course)}','${esc(r.session)}')">💾</button>
+        <span class="save-msg" id="msg-${i}"></span>
+      </td>
+    </tr>`).join('');
+}
+
+function save(i,company,course,session){
+  const btn=document.querySelector(`#row-${i} .btn-save`);
+  const msg=document.getElementById('msg-'+i);
+  const status=document.getElementById('status-'+i).value;
+  const date=document.getElementById('date-'+i).value.trim();
+  const time=document.getElementById('time-'+i).value.trim();
+  const lecturer=document.getElementById('lec-'+i).value.trim();
+  const students=document.getElementById('students-'+i).value.trim();
+  btn.disabled=true;btn.textContent='…';msg.textContent='';msg.className='save-msg';
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify({company,course,session,status,date,time,lecturer,students})})
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.success){
+        msg.textContent='✅';msg.className='save-msg ok';
+        const item=myData.find(r=>r.company===company&&r.course===course&&r.session===session);
+        if(item){item.status=status;item.date=date;item.time=time;item.lecturer=lecturer;item.students=students;}
+        renderStats();renderAlerts();
+      } else {msg.textContent='❌'+(res.error||'');msg.className='save-msg err';}
+    })
+    .catch(()=>{msg.textContent='❌網路錯誤';msg.className='save-msg err';})
+    .finally(()=>{btn.disabled=false;btn.textContent='💾';});
+}
+</script>
+</body>
+</html>
