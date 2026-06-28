@@ -108,6 +108,7 @@
     flex: 1;
     position: relative;
     background: var(--bg);
+    overflow: hidden;
   }
   iframe {
     width: 100%; height: 100%;
@@ -118,7 +119,8 @@
 
   /* 首頁 */
   .home-page {
-    width: 100%; height: 100%;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     overflow-y: auto;
     padding: 32px;
     display: none;
@@ -202,8 +204,8 @@
     </div>
 
     <div class="nav-section">報名管控</div>
-    <div class="nav-item" onclick="showFrame(this,'baoming_dashboard.html','報名管控面板')">
-      <span class="icon">📋</span><span class="label">報名管控面板</span>
+    <div class="nav-item" onclick="showFrame(this,'baoming_dashboard.html','課程報名管控')">
+      <span class="icon">📋</span><span class="label">課程報名管控</span>
     </div>
 
     <div class="nav-section">小人提內訓</div>
@@ -255,7 +257,7 @@
       <div class="home-grid">
         <div class="home-card" onclick="triggerNav(1)">
           <div class="ci bg-g">📋</div>
-          <div class="ct"><div class="cn">報名管控面板</div><div class="cd">報名、繳費、到課、確認信</div></div>
+          <div class="ct"><div class="cn">課程報名管控</div><div class="cd">報名、繳費、到課、確認信</div></div>
         </div>
       </div>
 
