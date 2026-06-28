@@ -119,7 +119,7 @@
     <div class="section-title">📅 即將開課（15天內）</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>開課日期</th><th>課程名稱</th><th>公司名稱</th><th>學員姓名</th><th>繳費</th><th>到課</th><th>確認信</th><th>負責人</th><th>進案渠道</th><th>聯繫記錄</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th></tr></thead>
         <tbody id="tbody-soon"></tbody>
       </table>
     </div>
@@ -162,7 +162,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>聯絡電話</th><th>進案渠道</th><th>介紹人</th><th>繳費狀況</th><th>到課狀況</th><th>負責人</th><th>狀態</th><th>確認信</th><th>聯繫記錄</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>聯絡電話</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th></tr></thead>
         <tbody id="tbody-course"></tbody>
       </table>
     </div>
@@ -184,7 +184,7 @@
         <option value="未繳">未繳</option>
       </select>
       <select id="filter-owner" onchange="renderAll()">
-        <option value="">全部負責人</option>
+        <option value="">全部介紹人</option>
         <option value="佑妮">佑妮</option>
         <option value="大師兄">大師兄</option>
         <option value="克斯">克斯</option>
@@ -196,7 +196,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>報名日期</th><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>進案渠道</th><th>介紹人</th><th>繳費狀況</th><th>到課狀況</th><th>負責人</th><th>狀態</th><th>確認信</th><th>聯繫記錄</th></tr></thead>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>聯繫記錄</th><th>繳費狀況</th><th>確認信</th><th>狀態</th><th>到課狀況</th><th>進案渠道</th><th>介紹人</th><th>報名日期</th></tr></thead>
         <tbody id="tbody-all"></tbody>
       </table>
     </div>
@@ -432,7 +432,7 @@ function renderTodo() {
     ? '<div class="empty">✅ 沒有未繳費學員</div>'
     : unpaid.map(r=>`<div class="alert-card">
         <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
-        <div class="detail">📚 ${r.課程名稱||'—'} ｜ 📅 ${r.開課日期||'—'} ｜ 👤 ${r.負責人||'—'} ｜ 介紹人：${r.介紹人||'—'}</div></div>
+        <div class="detail">📚 ${r.課程名稱||'—'} ｜ 📅 ${r.開課日期||'—'} ｜ 介紹人：${r.負責人||'—'}</div></div>
         <span class="badge badge-coral">未繳費</span></div>`).join('');
 
   const noEmail = allData.filter(r => r.Email && !r.確認信已發);
@@ -440,7 +440,7 @@ function renderTodo() {
     ? '<div class="empty">✅ 確認信都已發送</div>'
     : noEmail.map(r=>`<div class="alert-card no-email">
         <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
-        <div class="detail">📧 ${r.Email} ｜ 📚 ${r.課程名稱||'—'} ｜ 👤 ${r.負責人||'—'}</div></div>
+        <div class="detail">📧 ${r.Email} ｜ 📚 ${r.課程名稱||'—'} ｜ 介紹人：${r.負責人||'—'}</div></div>
         <span class="badge badge-blue">待發信</span></div>`).join('');
 }
 
@@ -449,19 +449,22 @@ function renderSoon() {
   const soon = allData.filter(r=>{const d=daysDiff(r.開課日期);return d!==null&&d>=0&&d<=15;})
     .sort((a,b)=>a.開課日期>b.開課日期?1:-1);
   const tb = document.getElementById('tbody-soon');
-  if (!soon.length) { tb.innerHTML='<tr><td colspan="9" class="empty">目前沒有15天內開課</td></tr>'; return; }
+  if (!soon.length) { tb.innerHTML='<tr><td colspan="11" class="empty">目前沒有15天內開課</td></tr>'; return; }
   tb.innerHTML = soon.map(r => {
     const d = daysDiff(r.開課日期);
     const tag = d===0?'<span class="badge badge-coral">今日</span>':d<=3?`<span class="badge badge-amber">${d}天後</span>`:`<span class="badge badge-gray">${d}天後</span>`;
     return `<tr>
-      <td>${r.開課日期} ${tag}</td><td class="wrap">${r.課程名稱||'—'}</td>
-      <td>${r.公司名稱||'散客'}</td><td>${r.學員姓名||'—'}</td>
+      <td>${r.公司名稱||'散客'}</td>
+      <td>${r.學員姓名||'—'}</td>
+      <td class="wrap">${r.課程名稱||'—'}</td>
+      <td>${r.開課日期} ${tag}</td>
+      <td>${editNote(r._row,r.聯繫記錄)}</td>
       <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
-      <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
       <td>${emailBadge(r.確認信已發)}</td>
-      <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
+      <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+      <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
       <td>${channelBadge(r.進案渠道)}</td>
-      <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`;
+      <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td></tr>`;
   }).join('');
 }
 
@@ -498,14 +501,13 @@ function renderCourse() {
         <td>${r.公司名稱||'散客'}</td>
         <td>${r.學員姓名||'—'}</td>
         <td>${r.學員電話||'—'}</td>
-        <td>${channelBadge(r.進案渠道)}</td>
-        <td>${r.介紹人||'—'}</td>
+        <td>${editNote(r._row,r.聯繫記錄)}</td>
         <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
-        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
-        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
-        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
         <td>${emailBadge(r.確認信已發)}</td>
-        <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`).join('');
+        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
+        <td>${channelBadge(r.進案渠道)}</td>
+        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td></tr>`).join('');
   countEl.textContent=`共 ${rows.length} 位學員`;
 }
 
@@ -521,25 +523,24 @@ function renderAll() {
     if (pd && r.繳費狀況!==pd) return false;
     if (ow && r.負責人!==ow) return false;
     if (cs && r.課程名稱!==cs) return false;
-    if (kw && ![r.公司名稱,r.學員姓名,r.課程名稱,r.介紹人,r.Email].join(' ').toLowerCase().includes(kw)) return false;
+    if (kw && ![r.公司名稱,r.學員姓名,r.課程名稱,r.負責人,r.Email].join(' ').toLowerCase().includes(kw)) return false;
     return true;
   });
   document.getElementById('tbody-all').innerHTML = filtered.length===0
     ? '<tr><td colspan="12" class="empty">沒有符合條件的資料</td></tr>'
     : filtered.map(r=>`<tr>
-        <td>${r.報名日期||'—'}</td>
         <td>${r.公司名稱||'散客'}</td>
         <td>${r.學員姓名||'—'}</td>
         <td class="wrap">${r.課程名稱||'—'}</td>
         <td>${r.開課日期||'—'}</td>
-        <td>${channelBadge(r.進案渠道)}</td>
-        <td>${r.介紹人||'—'}</td>
+        <td>${editNote(r._row,r.聯繫記錄)}</td>
         <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
-        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
-        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
-        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
         <td>${emailBadge(r.確認信已發)}</td>
-        <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`).join('');
+        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
+        <td>${channelBadge(r.進案渠道)}</td>
+        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
+        <td>${r.報名日期||'—'}</td></tr>`).join('');
   document.getElementById('all-count').textContent=`共 ${filtered.length} 筆`;
 }
 
