@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QAS 工作入口</title>
+<style>
+  :root {
+    --g1: #1a3a0f; --g2: #2d5a1a; --g3: #639922; --g4: #9ec96a; --g5: #eaf3de;
+    --ink: #1a1a1a; --muted: #6b7280; --border: #d4e6c0; --bg: #f4f8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Microsoft JhengHei','PingFang TC',sans-serif; }
+
+  /* ── 側邊欄 ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--g1);
+    display: flex; flex-direction: column;
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .sidebar-logo .brand {
+    font-size: 15px; font-weight: 700; color: #fff; letter-spacing: .02em;
+  }
+  .sidebar-logo .sub {
+    font-size: 11px; color: var(--g4); margin-top: 3px;
+  }
+
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+
+  .nav-section {
+    padding: 14px 16px 4px;
+    font-size: 10px; font-weight: 600; color: rgba(158,201,106,.5);
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-size: 13px; color: rgba(255,255,255,.7);
+    transition: background .15s, color .15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .nav-item.active {
+    background: rgba(99,153,34,.15);
+    color: #fff;
+    border-left-color: var(--g3);
+  }
+  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-item .label { flex: 1; }
+  .nav-item .ext { font-size: 10px; color: rgba(255,255,255,.3); }
+
+  /* 子項目（小人提三人） */
+  .nav-sub {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 16px 7px 46px;
+    cursor: pointer;
+    font-size: 12px; color: rgba(255,255,255,.55);
+    transition: background .15s, color .15s;
+    border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+  .nav-sub:hover { background: rgba(255,255,255,.06); color: #fff; }
+  .nav-sub.active { background: rgba(99,153,34,.12); color: var(--g4); border-left-color: var(--g3); }
+
+  .sidebar-footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    font-size: 11px; color: rgba(255,255,255,.3);
+  }
+
+  /* ── 主內容區 ── */
+  .main {
+    margin-left: 220px;
+    height: 100vh;
+    display: flex; flex-direction: column;
+  }
+
+  .topbar {
+    height: 44px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .topbar .page-title {
+    font-size: 13px; font-weight: 600; color: var(--g1);
+  }
+  .topbar .breadcrumb {
+    font-size: 12px; color: var(--muted);
+  }
+  .topbar .spacer { flex: 1; }
+  .topbar .date { font-size: 12px; color: var(--muted); }
+
+  /* iframe 區 */
+  .frame-area {
+    flex: 1;
+    position: relative;
+    background: var(--bg);
+  }
+  iframe {
+    width: 100%; height: 100%;
+    border: none;
+    display: none;
+  }
+  iframe.active { display: block; }
+
+  /* 首頁 */
+  .home-page {
+    width: 100%; height: 100%;
+    overflow-y: auto;
+    padding: 32px;
+    display: none;
+  }
+  .home-page.active { display: block; }
+
+  .home-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    max-width: 800px;
+  }
+
+  .home-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: box-shadow .15s, border-color .15s, transform .1s;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .home-card:hover {
+    border-color: var(--g3);
+    box-shadow: 0 4px 16px rgba(26,58,15,.10);
+    transform: translateY(-1px);
+  }
+  .home-card .ci {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .bg-g { background: var(--g5); }
+  .bg-b { background: #e6f1fb; }
+  .bg-a { background: #faeeda; }
+  .bg-t { background: #e1f5ee; }
+  .bg-p { background: #f0eaff; }
+  .home-card .ct { flex: 1; }
+  .home-card .cn { font-size: 14px; font-weight: 600; color: var(--g1); margin-bottom: 3px; }
+  .home-card .cd { font-size: 12px; color: var(--muted); }
+
+  .section-title {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    letter-spacing: .08em; text-transform: uppercase;
+    margin: 24px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    max-width: 800px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .welcome {
+    font-size: 22px; font-weight: 700; color: var(--g1);
+    margin-bottom: 6px;
+  }
+  .welcome-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+  /* 外部連結提示 */
+  .ext-notice {
+    position: absolute; bottom: 16px; right: 16px;
+    background: var(--g1); color: #fff;
+    font-size: 12px; padding: 8px 14px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity .3s;
+  }
+  .ext-notice.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- 側邊欄 -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">QAS 克斯有限公司</div>
+    <div class="sub" id="today-side"></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">主頁</div>
+    <div class="nav-item active" onclick="showHome(this)">
+      <span class="icon">🏠</span><span class="label">工作入口</span>
+    </div>
+
+    <div class="nav-section">報名管控</div>
+    <div class="nav-item" onclick="showFrame(this,'baoming_dashboard.html','報名管控面板')">
+      <span class="icon">📋</span><span class="label">報名管控面板</span>
+    </div>
+
+    <div class="nav-section">小人提內訓</div>
+    <div class="nav-item" onclick="showFrame(this,'https://arlooba5.github.io/-/neixun_kes.html','克斯 · 內訓管控')">
+      <span class="icon">📚</span><span class="label">克斯</span>
+    </div>
+    <div class="nav-item" onclick="showFrame(this,'https://arlooba5.github.io/-/neixun_dashixiong.html','大師兄 · 內訓管控')">
+      <span class="icon">📚</span><span class="label">大師兄</span>
+    </div>
+    <div class="nav-item" onclick="showFrame(this,'https://arlooba5.github.io/-/neixun_youni.html','佑妮 · 內訓管控')">
+      <span class="icon">📚</span><span class="label">佑妮</span>
+    </div>
+
+    <div class="nav-section">課程管理</div>
+    <div class="nav-item" onclick="showFrame(this,'yinfa_dashboard.html','銀髮特對管控')">
+      <span class="icon">👴</span><span class="label">銀髮特對管控</span>
+    </div>
+
+    <div class="nav-section">雲端文件</div>
+    <div class="nav-item" onclick="openExt(this,'https://drive.google.com/drive/folders/17ni3tEs1npiZO4t7RkEPHiQSB0pPOkMB?usp=drive_link')">
+      <span class="icon">📁</span><span class="label">標案雲端空間</span><span class="ext">↗</span>
+    </div>
+    <div class="nav-item" onclick="openExt(this,'https://docs.google.com/spreadsheets/d/1KVodgDlu4NGkSlrBXaA9eFE8fKMDZBWH/edit?usp=sharing')">
+      <span class="icon">📊</span><span class="label">月報表</span><span class="ext">↗</span>
+    </div>
+    <div class="nav-item" onclick="openExt(this,'https://docs.google.com/spreadsheets/d/1KVodgDlu4NGkSlrBXaA9eFE8fKMDZBWH/edit?usp=sharing')">
+      <span class="icon">🏢</span><span class="label">沙鹿場地租借</span><span class="ext">↗</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">© 克斯有限公司 · 內部使用</div>
+</div>
+
+<!-- 主內容 -->
+<div class="main">
+  <div class="topbar">
+    <span class="breadcrumb" id="breadcrumb">工作入口</span>
+    <div class="spacer"></div>
+    <div class="date" id="today-top"></div>
+  </div>
+
+  <div class="frame-area">
+    <!-- 首頁 -->
+    <div class="home-page active" id="home-page">
+      <div class="welcome">工作入口 👋</div>
+      <div class="welcome-sub">點選左側選單，或從下方快速進入</div>
+
+      <div class="section-title">報名管控</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="triggerNav(1)">
+          <div class="ci bg-g">📋</div>
+          <div class="ct"><div class="cn">報名管控面板</div><div class="cd">報名、繳費、到課、確認信</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">小人提內訓控管</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="triggerNav(3)">
+          <div class="ci bg-g">🧑‍💼</div>
+          <div class="ct"><div class="cn">克斯</div><div class="cd">內訓管控</div></div>
+        </div>
+        <div class="home-card" onclick="triggerNav(4)">
+          <div class="ci bg-b">🧑‍🏫</div>
+          <div class="ct"><div class="cn">大師兄</div><div class="cd">內訓管控</div></div>
+        </div>
+        <div class="home-card" onclick="triggerNav(5)">
+          <div class="ci bg-t">👩‍💼</div>
+          <div class="ct"><div class="cn">佑妮</div><div class="cd">內訓管控</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">課程管理</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="triggerNav(7)">
+          <div class="ci bg-t">👴</div>
+          <div class="ct"><div class="cn">銀髮特對管控</div><div class="cd">課程、講師、本週提醒</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">雲端文件</div>
+      <div class="home-grid">
+        <div class="home-card" onclick="triggerNav(9)">
+          <div class="ci bg-a">📁</div>
+          <div class="ct"><div class="cn">標案雲端空間</div><div class="cd">Google Drive · 開新分頁</div></div>
+        </div>
+        <div class="home-card" onclick="triggerNav(10)">
+          <div class="ci bg-g">📊</div>
+          <div class="ct"><div class="cn">月報表</div><div class="cd">Google Sheets · 開新分頁</div></div>
+        </div>
+        <div class="home-card" onclick="triggerNav(11)">
+          <div class="ci bg-p">🏢</div>
+          <div class="ct"><div class="cn">沙鹿場地租借</div><div class="cd">Google Sheets · 開新分頁</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- iframe 容器（動態產生） -->
+    <iframe id="main-frame"></iframe>
+
+    <div class="ext-notice" id="ext-notice">已在新分頁開啟 ↗</div>
+  </div>
+</div>
+
+<script>
+  // 日期
+  const d = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} 週${days[d.getDay()]}`;
+  document.getElementById('today-side').textContent = dateStr;
+  document.getElementById('today-top').textContent = dateStr;
+
+  const allNavItems = document.querySelectorAll('.nav-item');
+
+  function setActive(el) {
+    allNavItems.forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+
+  function showHome(el) {
+    setActive(el);
+    document.getElementById('home-page').classList.add('active');
+    document.getElementById('main-frame').classList.remove('active');
+    document.getElementById('breadcrumb').textContent = '工作入口';
+  }
+
+  function showFrame(el, url, title) {
+    setActive(el);
+    document.getElementById('home-page').classList.remove('active');
+    const frame = document.getElementById('main-frame');
+    frame.src = url;
+    frame.classList.add('active');
+    document.getElementById('breadcrumb').textContent = title;
+  }
+
+  function openExt(el, url) {
+    window.open(url, '_blank');
+    const notice = document.getElementById('ext-notice');
+    notice.classList.add('show');
+    setTimeout(() => notice.classList.remove('show'), 2000);
+  }
+
+  // 首頁卡片點擊觸發對應 nav-item
+  function triggerNav(idx) {
+    allNavItems[idx].click();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QAS 報名管控面板</title>
+<style>
+  :root {
+    --green-dark: #1a3a0f; --green-mid: #2d5a1a; --green-bright: #639922;
+    --green-light: #eaf3de; --amber: #faeeda; --amber-text: #854f0b;
+    --coral: #faece7; --coral-text: #993c1d; --blue-light: #e6f1fb;
+    --blue-text: #185fa5; --teal-light: #e1f5ee; --teal-text: #0f6e56;
+    --border: #e0e0e0; --text: #1a1a1a; --text-muted: #888; --bg: #f7f9f5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+  .header { background: var(--green-dark); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .sub { font-size: 12px; color: #9ec96a; margin-top: 2px; }
+  .refresh-btn { background: var(--green-bright); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; padding: 16px 24px; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid var(--border); }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: var(--green-dark); }
+  .stat-card .label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .stat-card.warn .num { color: var(--coral-text); }
+  .stat-card.ok .num { color: var(--teal-text); }
+  .stat-card.info .num { color: var(--blue-text); }
+  .tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 2px solid var(--border); }
+  .tab { padding: 10px 18px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border: 1px solid transparent; border-bottom: none; }
+  .tab.active { background: #fff; color: var(--green-dark); border-color: var(--border); border-bottom-color: #fff; margin-bottom: -2px; }
+  .tab-content { display: none; padding: 16px 24px; }
+  .tab-content.active { display: block; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .filters select, .filters input { padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; }
+  .filters input { width: 180px; }
+  .filters select.course-select { min-width: 240px; }
+  .course-summary { background: #fff; border-radius: 10px; border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 14px; display: none; }
+  .course-summary.show { display: block; }
+  .course-summary h3 { font-size: 15px; color: var(--green-dark); margin-bottom: 10px; }
+  .mini-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .mini-stat { display: flex; flex-direction: column; align-items: center; background: var(--bg); border-radius: 8px; padding: 10px 18px; }
+  .mini-stat .n { font-size: 22px; font-weight: 700; color: var(--green-dark); }
+  .mini-stat .l { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .mini-stat.warn .n { color: var(--coral-text); }
+  .mini-stat.ok .n { color: var(--teal-text); }
+  .section-title { font-size: 14px; font-weight: 600; color: var(--green-dark); margin-bottom: 10px; }
+  .alert-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .alert-card { background: #fff; border-radius: 8px; padding: 12px 16px; border-left: 4px solid var(--coral-text); display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .alert-card.no-email { border-left-color: var(--blue-text); }
+  .alert-card .name { font-weight: 600; }
+  .alert-card .detail { color: var(--text-muted); font-size: 12px; margin-top: 3px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-coral { background: var(--coral); color: var(--coral-text); }
+  .badge-amber { background: var(--amber); color: var(--amber-text); }
+  .badge-blue { background: var(--blue-light); color: var(--blue-text); }
+  .badge-green { background: var(--green-light); color: var(--green-mid); }
+  .badge-teal { background: var(--teal-light); color: var(--teal-text); }
+  .badge-gray { background: #f0f0f0; color: #666; }
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  thead th { background: var(--green-dark); color: #fff; padding: 10px 12px; text-align: left; white-space: nowrap; font-weight: 500; }
+  tbody tr { border-bottom: 1px solid #f0f0f0; }
+  tbody tr:hover { background: #fafff7; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 9px 12px; white-space: nowrap; vertical-align: middle; }
+  td.wrap { white-space: normal; max-width: 150px; font-size: 12px; }
+  .note-cell { cursor: pointer; min-width: 140px; max-width: 200px; white-space: normal; font-size: 12px; color: #444; padding: 2px; border-radius: 4px; }
+  .note-cell:hover { background: #f0f8e8; }
+  .note-input { width: 100%; font-size: 12px; padding: 4px; border: 1px solid var(--green-bright); border-radius: 4px; font-family: inherit; resize: vertical; }
+  .note-btn { font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; background: #fff; }
+  .note-btn.ok { background: var(--green-bright); color: #fff; border-color: var(--green-bright); }
+  .loading { text-align: center; padding: 48px; color: var(--text-muted); font-size: 16px; }
+  .count-row { text-align: right; font-size: 12px; color: #888; padding: 8px 4px; }
+
+  /* 可編輯下拉選單 */
+  .edit-select {
+    border: 1px solid transparent; border-radius: 4px; background: transparent;
+    font-size: 12px; cursor: pointer; padding: 3px 6px; font-family: inherit;
+    color: inherit; appearance: none; -webkit-appearance: none;
+  }
+  .edit-select:hover { border-color: var(--green-bright); background: #fff; }
+  .edit-select:focus { outline: 2px solid var(--green-bright); border-color: var(--green-bright); background: #fff; }
+  .saving { opacity: 0.5; pointer-events: none; }
+  .save-ok { color: var(--teal-text); font-size: 11px; }
+  .save-err { color: var(--coral-text); font-size: 11px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--green-dark); color: #fff;
+    padding: 10px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header h1">📋 QAS 報名管控面板</div>
+    <div class="sub">克斯有限公司 · 點擊欄位可直接修改</div>
+  </div>
+  <button class="refresh-btn" onclick="loadData()">🔄 重新整理</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="loading" class="loading">載入中...</div>
+<div id="main" style="display:none;">
+
+  <div class="stats">
+    <div class="stat-card"><div class="num" id="s-total">0</div><div class="label">總報名人次</div></div>
+    <div class="stat-card ok"><div class="num" id="s-paid">0</div><div class="label">已繳費</div></div>
+    <div class="stat-card warn"><div class="num" id="s-unpaid">0</div><div class="label">未繳費</div></div>
+    <div class="stat-card"><div class="num" id="s-empty-paid">0</div><div class="label">繳費未填</div></div>
+    <div class="stat-card info"><div class="num" id="s-no-email">0</div><div class="label">待發確認信</div></div>
+    <div class="stat-card"><div class="num" id="s-soon">0</div><div class="label">15天內開課</div></div>
+  </div>
+
+  <!-- 即將開課（主頁面常駐） -->
+  <div id="soon-section" style="padding:0 24px 16px;">
+    <div class="section-title">📅 即將開課（15天內）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>開課日期</th><th>課程名稱</th><th>公司名稱</th><th>學員姓名</th><th>繳費</th><th>到課</th><th>確認信</th><th>負責人</th><th>進案渠道</th><th>聯繫記錄</th></tr></thead>
+        <tbody id="tbody-soon"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('todo')">⚠️ 待處理</div>
+    <div class="tab" onclick="switchTab('class')">📊 各班統計</div>
+    <div class="tab" onclick="switchTab('course')">📚 依課程查詢</div>
+    <div class="tab" onclick="switchTab('all')">📋 全部名單</div>
+  </div>
+
+  <!-- 各班統計 -->
+  <div class="tab-content" id="tab-class">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>課程名稱</th><th>開課日期</th><th>報名人數</th><th>已繳費</th><th>未繳費</th><th>繳費未填</th><th>出席</th><th>缺席</th><th>待發確認信</th></tr></thead>
+        <tbody id="tbody-class"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tab-content active" id="tab-todo">
+    <div class="section-title">💰 未繳費（需跟催）</div>
+    <div class="alert-list" id="list-unpaid"></div>
+    <div class="section-title">📧 尚未發確認信</div>
+    <div class="alert-list" id="list-no-email"></div>
+  </div>
+
+  <!-- 依課程查詢 -->
+  <div class="tab-content" id="tab-course">
+    <div class="filters">
+      <span style="font-size:12px;color:#888;">選擇課程：</span>
+      <select class="course-select" id="filter-course" onchange="renderCourse()">
+        <option value="">— 請選擇課程 —</option>
+      </select>
+    </div>
+    <div class="course-summary" id="course-summary">
+      <h3 id="course-summary-title"></h3>
+      <div class="mini-stats" id="course-mini-stats"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>公司名稱</th><th>學員姓名</th><th>聯絡電話</th><th>進案渠道</th><th>介紹人</th><th>繳費狀況</th><th>到課狀況</th><th>負責人</th><th>狀態</th><th>確認信</th><th>聯繫記錄</th></tr></thead>
+        <tbody id="tbody-course"></tbody>
+      </table>
+    </div>
+    <div class="count-row" id="course-count"></div>
+  </div>
+
+  <!-- 全部名單 -->
+  <div class="tab-content" id="tab-all">
+    <div class="filters">
+      <select id="filter-channel" onchange="renderAll()">
+        <option value="">全部渠道</option>
+        <option value="小人提">小人提</option>
+        <option value="非小人提">非小人提</option>
+        <option value="自行報名">自行報名</option>
+      </select>
+      <select id="filter-paid" onchange="renderAll()">
+        <option value="">全部繳費狀況</option>
+        <option value="已繳">已繳</option>
+        <option value="未繳">未繳</option>
+      </select>
+      <select id="filter-owner" onchange="renderAll()">
+        <option value="">全部負責人</option>
+        <option value="佑妮">佑妮</option>
+        <option value="大師兄">大師兄</option>
+        <option value="克斯">克斯</option>
+      </select>
+      <select id="filter-all-course" onchange="renderAll()">
+        <option value="">全部課程</option>
+      </select>
+      <input type="text" id="filter-search" placeholder="搜尋公司、學員、介紹人..." oninput="renderAll()">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>報名日期</th><th>公司名稱</th><th>學員姓名</th><th>課程名稱</th><th>開課日期</th><th>進案渠道</th><th>介紹人</th><th>繳費狀況</th><th>到課狀況</th><th>負責人</th><th>狀態</th><th>確認信</th><th>聯繫記錄</th></tr></thead>
+        <tbody id="tbody-all"></tbody>
+      </table>
+    </div>
+    <div class="count-row" id="all-count"></div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwgqyaipRkpHcVG6muwvBA3ypvpffwzCPR3w1i1n9Pko0ooZEh-PXrQX2Jo8efR79U/exec';
+let allData = [];
+
+// ── 資料載入 ──────────────────────────────────────────────
+function loadData() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
+  fetch(API_URL + '?sheet=registration')
+    .then(r => r.json())
+    .then(data => {
+      allData = Array.isArray(data) ? data : [];
+      buildCourseOptions();
+      renderStats();
+      renderTodo();
+      renderSoon();
+      renderAll();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+    })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = '❌ 載入失敗，請重新整理<br><small>' + err + '</small>';
+    });
+}
+
+// ── 回寫 Google Sheets ────────────────────────────────────
+async function updateField(rowNum, field, value, el) {
+  el && el.classList.add('saving');
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateRegistration', row: rowNum, [field]: value }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      // 同步更新本地資料
+      const rec = allData.find(r => r._row === rowNum);
+      if (rec) rec[field] = value;
+      showToast(`✅ ${field} 已更新`);
+    } else {
+      showToast(`❌ 更新失敗：${json.error}`, true);
+    }
+  } catch(e) {
+    showToast('❌ 網路錯誤', true);
+  }
+  el && el.classList.remove('saving');
+}
+
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isErr ? '#993c1d' : '#1a3a0f';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── 可編輯欄位 HTML ──────────────────────────────────────
+function editSelect(rowNum, field, current, options) {
+  const opts = options.map(o => `<option value="${o}" ${o===current?'selected':''}>${o||'—'}</option>`).join('');
+  return `<select class="edit-select" onchange="updateField(${rowNum},'${field}',this.value,this)">${opts}</select>`;
+}
+
+function editNote(rowNum, current) {
+  const lines = (current||'').split('\n').filter(l=>l.trim());
+  const latest = lines[lines.length - 1] || '';
+  const history = lines.slice(0, -1);
+  let html = '';
+  if (latest) {
+    html += `<div style="font-size:11px;color:#333;font-weight:500;line-height:1.5;">${latest.replace(/</g,'&lt;')}</div>`;
+  } else {
+    html = '<span style="color:#ccc;font-size:12px;">點擊新增記錄</span>';
+  }
+  if (history.length) {
+    html += history.map(l=>`<div style="font-size:10px;color:#aaa;line-height:1.5;">${l.replace(/</g,'&lt;')}</div>`).join('');
+  }
+  return `<div class="note-cell" onclick="openNoteEdit(this,${rowNum},\`${(current||'').replace(/`/g,'\\`')}\`)" title="點擊新增聯繫記錄">
+    ${html}
+  </div>`;
+}
+
+function openNoteEdit(el, rowNum, existing) {
+  if (el.querySelector('textarea')) return;
+  el.innerHTML = `
+    ${existing ? `<div style="font-size:11px;color:#888;margin-bottom:6px;max-height:60px;overflow-y:auto;">${existing.replace(/\n/g,'<br>')}</div>` : ''}
+    <textarea class="note-input" rows="2" placeholder="輸入這次聯繫內容..."></textarea>
+    <div style="margin-top:4px;display:flex;gap:6px;">
+      <button class="note-btn ok" onclick="saveNote(event,${rowNum},this)">✓ 新增</button>
+      <button class="note-btn" onclick="cancelNote(event,this,\`${existing.replace(/`/g,'\\`')}\`)">✕ 取消</button>
+    </div>`;
+  el.querySelector('textarea').focus();
+}
+
+function saveNote(e, rowNum, btn) {
+  e.stopPropagation();
+  const cell = btn.closest('.note-cell');
+  const val  = cell.querySelector('textarea').value.trim();
+  if (!val) { showToast('請輸入聯繫內容', true); return; }
+  updateField(rowNum, '聯繫記錄', val, cell).then(() => {
+    // 更新本地資料並重新渲染格子
+    const rec = allData.find(r => r._row === rowNum);
+    if (rec) {
+      const now = new Date();
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const dd = String(now.getDate()).padStart(2,'0');
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mi = String(now.getMinutes()).padStart(2,'0');
+      const entry = `${mm}/${dd} ${hh}:${mi} ${val}`;
+      rec.聯繫記錄 = rec.聯繫記錄 ? rec.聯繫記錄 + '\n' + entry : entry;
+      cell.innerHTML = editNote(rowNum, rec.聯繫記錄).match(/>([\s\S]*?)<\/div>/)?.[0] || '';
+      // 直接重繪整個 cell 內容
+      const newHtml = editNote(rowNum, rec.聯繫記錄);
+      const tmp = document.createElement('div');
+      tmp.innerHTML = newHtml;
+      const inner = tmp.firstChild;
+      cell.innerHTML = inner ? inner.innerHTML : '';
+      cell.onclick = () => openNoteEdit(cell, rowNum, rec.聯繫記錄);
+    }
+  });
+}
+
+function cancelNote(e, btn, existing) {
+  e.stopPropagation();
+  const cell = btn.closest('.note-cell');
+  const preview = existing ? existing.split('\n').map(l=>`<div style="font-size:11px;color:#555;line-height:1.5;">${l}</div>`).join('')
+                           : '<span style="color:#ccc;font-size:12px;">點擊新增記錄</span>';
+  cell.innerHTML = preview;
+}
+
+// ── 工具函式 ─────────────────────────────────────────────
+function daysDiff(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  return Math.round((d - today) / (1000*60*60*24));
+}
+
+function channelBadge(c) {
+  const map = { '小人提':'badge-blue', '非小人提':'badge-amber', '自行報名':'badge-teal' };
+  return `<span class="badge ${map[c]||'badge-gray'}">${c||'—'}</span>`;
+}
+function paidBadge(p) { return `<span class="badge ${p==='已繳'?'badge-green':'badge-coral'}">${p||'未繳'}</span>`; }
+function attendBadge(a) {
+  const map = { '出席':'badge-teal', '缺席':'badge-coral', '請假':'badge-amber' };
+  return a ? `<span class="badge ${map[a]||'badge-gray'}">${a}</span>` : `<span class="badge badge-gray">—</span>`;
+}
+function emailBadge(sent) { return `<span class="badge ${sent?'badge-green':'badge-gray'}">${sent?'已發':'未發'}</span>`; }
+
+// ── 課程選單 ──────────────────────────────────────────────
+function buildCourseOptions() {
+  const courseMap = {};
+  allData.forEach(r => { if (r.課程名稱 && !courseMap[r.課程名稱]) courseMap[r.課程名稱] = r.開課日期||''; });
+  const courses = Object.keys(courseMap).sort((a,b) => (courseMap[a]>courseMap[b]?1:-1));
+  ['filter-course','filter-all-course'].forEach((id,i) => {
+    const sel = document.getElementById(id);
+    const def = i===0 ? '— 請選擇課程 —' : '全部課程';
+    sel.innerHTML = `<option value="">${def}</option>` +
+      courses.map(c => `<option value="${c}">${c}${courseMap[c]?' ('+courseMap[c]+')':''}</option>`).join('');
+  });
+}
+
+// ── 統計 ─────────────────────────────────────────────────
+function renderStats() {
+  const total     = allData.length;
+  const paid      = allData.filter(r => r.繳費狀況 === '已繳').length;
+  const unpaid    = allData.filter(r => r.繳費狀況 === '未繳').length;
+  const emptyPaid = allData.filter(r => !r.繳費狀況 || (r.繳費狀況 !== '已繳' && r.繳費狀況 !== '未繳')).length;
+  const noEmail   = allData.filter(r => r.Email && !r.確認信已發).length;
+  const soon      = allData.filter(r => { const d = daysDiff(r.開課日期); return d !== null && d >= 0 && d <= 15; }).length;
+  document.getElementById('s-total').textContent     = total;
+  document.getElementById('s-paid').textContent      = paid;
+  document.getElementById('s-unpaid').textContent    = unpaid;
+  document.getElementById('s-empty-paid').textContent = emptyPaid;
+  document.getElementById('s-no-email').textContent  = noEmail;
+  document.getElementById('s-soon').textContent      = soon;
+  renderCourseOverview();
+}
+
+// ── 各班統計 ─────────────────────────────────────────────
+function renderCourseOverview() {
+  const courseMap = {};
+  allData.forEach(r => {
+    if (!r.課程名稱) return;
+    if (!courseMap[r.課程名稱]) courseMap[r.課程名稱] = { total:0, paid:0, unpaid:0, empty:0, attend:0, absent:0, noEmail:0, date:r.開課日期||'' };
+    const c = courseMap[r.課程名稱];
+    c.total++;
+    if (r.繳費狀況==='已繳') c.paid++;
+    else if (r.繳費狀況==='未繳') c.unpaid++;
+    else c.empty++;
+    if (r.到課狀況==='出席') c.attend++;
+    if (r.到課狀況==='缺席') c.absent++;
+    if (r.Email && !r.確認信已發) c.noEmail++;
+  });
+
+  const courses = Object.entries(courseMap).sort((a,b) => a[1].date > b[1].date ? 1 : -1);
+  const tb = document.getElementById('tbody-class');
+  if (!courses.length) { tb.innerHTML='<tr><td colspan="9" class="empty">尚無資料</td></tr>'; return; }
+
+  tb.innerHTML = courses.map(([name, c]) => {
+    const d = daysDiff(c.date);
+    const soon = d !== null && d >= 0 && d <= 15;
+    const dateTag = soon ? `${c.date} <span class="badge badge-amber">${d===0?'今日':d+'天後'}</span>` : c.date||'—';
+    return `<tr style="${soon?'background:#fffbf0;':''}">
+      <td style="font-weight:500;cursor:pointer;color:#1a3a0f;" onclick="jumpToCourse('${name.replace(/'/g,"\\'")}')">${name}</td>
+      <td>${dateTag}</td>
+      <td style="font-weight:700;font-size:15px;">${c.total}</td>
+      <td><span class="badge badge-green">${c.paid}</span></td>
+      <td><span class="badge badge-coral">${c.unpaid}</span></td>
+      <td><span class="badge badge-gray">${c.empty}</span></td>
+      <td><span class="badge badge-teal">${c.attend}</span></td>
+      <td><span class="badge badge-coral">${c.absent}</span></td>
+      <td>${c.noEmail > 0 ? `<span class="badge badge-blue">${c.noEmail}</span>` : '<span class="badge badge-gray">0</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function jumpToCourse(name) {
+  switchTab('course');
+  document.getElementById('filter-course').value = name;
+  renderCourse();
+}
+
+// ── 待處理 ────────────────────────────────────────────────
+function renderTodo() {
+  const unpaid = allData.filter(r => r.繳費狀況 !== '已繳');
+  document.getElementById('list-unpaid').innerHTML = unpaid.length===0
+    ? '<div class="empty">✅ 沒有未繳費學員</div>'
+    : unpaid.map(r=>`<div class="alert-card">
+        <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
+        <div class="detail">📚 ${r.課程名稱||'—'} ｜ 📅 ${r.開課日期||'—'} ｜ 👤 ${r.負責人||'—'} ｜ 介紹人：${r.介紹人||'—'}</div></div>
+        <span class="badge badge-coral">未繳費</span></div>`).join('');
+
+  const noEmail = allData.filter(r => r.Email && !r.確認信已發);
+  document.getElementById('list-no-email').innerHTML = noEmail.length===0
+    ? '<div class="empty">✅ 確認信都已發送</div>'
+    : noEmail.map(r=>`<div class="alert-card no-email">
+        <div><div class="name">${r.學員姓名||'（未填）'} · <span style="font-weight:400;color:#888;">${r.公司名稱||'散客'}</span></div>
+        <div class="detail">📧 ${r.Email} ｜ 📚 ${r.課程名稱||'—'} ｜ 👤 ${r.負責人||'—'}</div></div>
+        <span class="badge badge-blue">待發信</span></div>`).join('');
+}
+
+// ── 即將開課 ─────────────────────────────────────────────
+function renderSoon() {
+  const soon = allData.filter(r=>{const d=daysDiff(r.開課日期);return d!==null&&d>=0&&d<=15;})
+    .sort((a,b)=>a.開課日期>b.開課日期?1:-1);
+  const tb = document.getElementById('tbody-soon');
+  if (!soon.length) { tb.innerHTML='<tr><td colspan="9" class="empty">目前沒有15天內開課</td></tr>'; return; }
+  tb.innerHTML = soon.map(r => {
+    const d = daysDiff(r.開課日期);
+    const tag = d===0?'<span class="badge badge-coral">今日</span>':d<=3?`<span class="badge badge-amber">${d}天後</span>`:`<span class="badge badge-gray">${d}天後</span>`;
+    return `<tr>
+      <td>${r.開課日期} ${tag}</td><td class="wrap">${r.課程名稱||'—'}</td>
+      <td>${r.公司名稱||'散客'}</td><td>${r.學員姓名||'—'}</td>
+      <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
+      <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
+      <td>${emailBadge(r.確認信已發)}</td>
+      <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
+      <td>${channelBadge(r.進案渠道)}</td>
+      <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`;
+  }).join('');
+}
+
+// ── 依課程查詢 ────────────────────────────────────────────
+function renderCourse() {
+  const course = document.getElementById('filter-course').value;
+  const summary = document.getElementById('course-summary');
+  const tb = document.getElementById('tbody-course');
+  const countEl = document.getElementById('course-count');
+  if (!course) {
+    summary.classList.remove('show');
+    tb.innerHTML='<tr><td colspan="10" class="empty">請先選擇課程</td></tr>';
+    countEl.textContent=''; return;
+  }
+  const rows = allData.filter(r=>r.課程名稱===course);
+  const paid=rows.filter(r=>r.繳費狀況==='已繳').length;
+  const unpaid=rows.filter(r=>r.繳費狀況!=='已繳').length;
+  const attended=rows.filter(r=>r.到課狀況==='出席').length;
+  const absent=rows.filter(r=>r.到課狀況==='缺席').length;
+  const noEmail=rows.filter(r=>r.Email&&!r.確認信已發).length;
+  const date=rows[0]?.開課日期||'', time=rows[0]?.開課時間||'', instructor=rows[0]?.講師||'';
+  summary.classList.add('show');
+  document.getElementById('course-summary-title').textContent =
+    `${course}${date?'　📅 '+date:''}${time?'　⏰ '+time:''}${instructor?'　👤 '+instructor:''}`;
+  document.getElementById('course-mini-stats').innerHTML = `
+    <div class="mini-stat"><div class="n">${rows.length}</div><div class="l">報名人數</div></div>
+    <div class="mini-stat ok"><div class="n">${paid}</div><div class="l">已繳費</div></div>
+    <div class="mini-stat warn"><div class="n">${unpaid}</div><div class="l">未繳費</div></div>
+    <div class="mini-stat ok"><div class="n">${attended}</div><div class="l">出席</div></div>
+    <div class="mini-stat warn"><div class="n">${absent}</div><div class="l">缺席</div></div>
+    <div class="mini-stat"><div class="n">${noEmail}</div><div class="l">待發確認信</div></div>`;
+  tb.innerHTML = rows.length===0 ? '<tr><td colspan="10" class="empty">這堂課目前沒有報名資料</td></tr>'
+    : rows.map(r=>`<tr>
+        <td>${r.公司名稱||'散客'}</td>
+        <td>${r.學員姓名||'—'}</td>
+        <td>${r.學員電話||'—'}</td>
+        <td>${channelBadge(r.進案渠道)}</td>
+        <td>${r.介紹人||'—'}</td>
+        <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
+        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
+        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
+        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${emailBadge(r.確認信已發)}</td>
+        <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`).join('');
+  countEl.textContent=`共 ${rows.length} 位學員`;
+}
+
+// ── 全部名單 ──────────────────────────────────────────────
+function renderAll() {
+  const ch=document.getElementById('filter-channel').value;
+  const pd=document.getElementById('filter-paid').value;
+  const ow=document.getElementById('filter-owner').value;
+  const cs=document.getElementById('filter-all-course').value;
+  const kw=document.getElementById('filter-search').value.toLowerCase();
+  const filtered = allData.filter(r => {
+    if (ch && r.進案渠道!==ch) return false;
+    if (pd && r.繳費狀況!==pd) return false;
+    if (ow && r.負責人!==ow) return false;
+    if (cs && r.課程名稱!==cs) return false;
+    if (kw && ![r.公司名稱,r.學員姓名,r.課程名稱,r.介紹人,r.Email].join(' ').toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  document.getElementById('tbody-all').innerHTML = filtered.length===0
+    ? '<tr><td colspan="12" class="empty">沒有符合條件的資料</td></tr>'
+    : filtered.map(r=>`<tr>
+        <td>${r.報名日期||'—'}</td>
+        <td>${r.公司名稱||'散客'}</td>
+        <td>${r.學員姓名||'—'}</td>
+        <td class="wrap">${r.課程名稱||'—'}</td>
+        <td>${r.開課日期||'—'}</td>
+        <td>${channelBadge(r.進案渠道)}</td>
+        <td>${r.介紹人||'—'}</td>
+        <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
+        <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
+        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
+        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${emailBadge(r.確認信已發)}</td>
+        <td>${editNote(r._row,r.聯繫記錄)}</td></tr>`).join('');
+  document.getElementById('all-count').textContent=`共 ${filtered.length} 筆`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  const tabs=['todo','class','course','all'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+loadData();
+</script>
+</body>
+</html>
