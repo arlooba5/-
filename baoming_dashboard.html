@@ -171,6 +171,33 @@
 
   <!-- 全部名單 -->
   <div class="tab-content" id="tab-all">
+    <div style="margin-bottom:14px;">
+      <button class="refresh-btn" onclick="toggleAddForm()" id="add-toggle-btn">➕ 新增小人提名單</button>
+    </div>
+    <div id="add-form" style="display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px;">➕ 新增小人提名單</div>
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:520px;">
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">課程場次</label>
+          <select id="add-course" class="course-select" style="width:100%;" onchange="onAddCourseChange()">
+            <option value="">— 請選擇課程 —</option>
+          </select>
+        </div>
+        <div id="add-course-info" style="font-size:12px;color:#888;display:none;"></div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">公司名稱</label>
+          <input type="text" id="add-company" placeholder="例：竣貿國際股份有限公司" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px;">學員姓名（逗號分隔）</label>
+          <input type="text" id="add-students" placeholder="例：王小明,陳美玲,李大華" style="width:100%;">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="refresh-btn" onclick="submitAddBatch()">✓ 送出</button>
+          <button class="note-btn" onclick="toggleAddForm()">✕ 取消</button>
+        </div>
+      </div>
+    </div>
     <div class="filters">
       <select id="filter-channel" onchange="renderAll()">
         <option value="">全部渠道</option>
@@ -332,6 +359,42 @@ function cancelNote(e, btn, existing) {
   cell.innerHTML = preview;
 }
 
+// ── 學員姓名 可點擊編輯（支援小人提多人逗號分隔） ─────────────
+function editName(rowNum, current) {
+  const display = current ? current.replace(/</g,'&lt;') : '<span style="color:#ccc;">點擊輸入姓名</span>';
+  return `<div class="note-cell" onclick="openNameEdit(this,${rowNum},\`${(current||'').replace(/`/g,'\\`')}\`)" title="點擊修改學員姓名">${display}</div>`;
+}
+
+function openNameEdit(el, rowNum, existing) {
+  if (el.querySelector('input')) return;
+  el.innerHTML = `
+    <input class="note-input" style="padding:5px 7px;" type="text" value="${existing.replace(/"/g,'&quot;')}" placeholder="王小明,陳美玲">
+    <div style="margin-top:4px;display:flex;gap:6px;">
+      <button class="note-btn ok" onclick="saveName(event,${rowNum},this)">✓ 儲存</button>
+      <button class="note-btn" onclick="cancelName(event,this,\`${existing.replace(/`/g,'\\`')}\`)">✕ 取消</button>
+    </div>`;
+  el.querySelector('input').focus();
+}
+
+function saveName(e, rowNum, btn) {
+  e.stopPropagation();
+  const cell = btn.closest('.note-cell');
+  const val  = cell.querySelector('input').value.trim();
+  updateField(rowNum, '學員姓名', val, cell).then(() => {
+    const rec = allData.find(r => r._row === rowNum);
+    if (rec) rec.學員姓名 = val;
+    cell.innerHTML = val ? val.replace(/</g,'&lt;') : '<span style="color:#ccc;">點擊輸入姓名</span>';
+    cell.onclick = () => openNameEdit(cell, rowNum, val);
+    renderStats(); // ✅ 人數依賴姓名計算，更新後重算統計
+  });
+}
+
+function cancelName(e, btn, existing) {
+  e.stopPropagation();
+  const cell = btn.closest('.note-cell');
+  cell.innerHTML = existing ? existing.replace(/</g,'&lt;') : '<span style="color:#ccc;">點擊輸入姓名</span>';
+}
+
 // ── 工具函式 ─────────────────────────────────────────────
 function daysDiff(dateStr) {
   if (!dateStr) return null;
@@ -355,27 +418,44 @@ function attendBadge(a) {
 }
 function emailBadge(sent) { return `<span class="badge ${sent?'badge-green':'badge-gray'}">${sent?'已發':'未發'}</span>`; }
 
+// ✅ 新增：計算單列代表的人數（小人提名單可能用逗號分隔多個姓名存成一列）
+function personCount(r) {
+  const name = (r.學員姓名 || '').trim();
+  if (!name) return 0;
+  return name.split(/[,，]/).map(s => s.trim()).filter(Boolean).length;
+}
+
 // ── 課程選單 ──────────────────────────────────────────────
+let courseInfoMap = {}; // ✅ 儲存課程詳細資料，供新增表單自動帶入
+
 function buildCourseOptions() {
   const courseMap = {};
   allData.forEach(r => { if (r.課程名稱 && !courseMap[r.課程名稱]) courseMap[r.課程名稱] = r.開課日期||''; });
   const courses = Object.keys(courseMap).sort((a,b) => (courseMap[a]>courseMap[b]?1:-1));
-  ['filter-course','filter-all-course'].forEach((id,i) => {
+  ['filter-course','filter-all-course','add-course'].forEach((id,i) => {
     const sel = document.getElementById(id);
-    const def = i===0 ? '— 請選擇課程 —' : '全部課程';
+    const def = i===0 ? '— 請選擇課程 —' : (i===1 ? '全部課程' : '— 請選擇課程 —');
     sel.innerHTML = `<option value="">${def}</option>` +
       courses.map(c => `<option value="${c}">${c}${courseMap[c]?' ('+courseMap[c]+')':''}</option>`).join('');
+  });
+  // ✅ 建立課程資訊對照表（開課日期/時間/講師），供新增表單帶入
+  courseInfoMap = {};
+  allData.forEach(r => {
+    if (r.課程名稱 && !courseInfoMap[r.課程名稱]) {
+      courseInfoMap[r.課程名稱] = { date: r.開課日期||'', time: r.開課時間||'', instructor: r.講師||'' };
+    }
   });
 }
 
 // ── 統計 ─────────────────────────────────────────────────
 function renderStats() {
-  const total     = allData.length;
-  const paid      = allData.filter(r => r.繳費狀況 === '已繳').length;
-  const unpaid    = allData.filter(r => r.繳費狀況 === '未繳').length;
-  const emptyPaid = allData.filter(r => !r.繳費狀況 || (r.繳費狀況 !== '已繳' && r.繳費狀況 !== '未繳')).length;
-  const noEmail   = allData.filter(r => r.Email && !r.確認信已發).length;
-  const soon      = allData.filter(r => { const d = daysDiff(r.開課日期); return d !== null && d >= 0 && d <= 15; }).length;
+  // ✅ 改用人數加總（小人提一列可能代表多人）
+  const total     = allData.reduce((sum, r) => sum + personCount(r), 0);
+  const paid      = allData.filter(r => r.繳費狀況 === '已繳').reduce((sum, r) => sum + personCount(r), 0);
+  const unpaid    = allData.filter(r => r.繳費狀況 === '未繳').reduce((sum, r) => sum + personCount(r), 0);
+  const emptyPaid = allData.filter(r => !r.繳費狀況 || (r.繳費狀況 !== '已繳' && r.繳費狀況 !== '未繳')).reduce((sum, r) => sum + personCount(r), 0);
+  const noEmail   = allData.filter(r => r.Email && !r.確認信已發).reduce((sum, r) => sum + personCount(r), 0);
+  const soon      = allData.filter(r => { const d = daysDiff(r.開課日期); return d !== null && d >= 0 && d <= 15; }).reduce((sum, r) => sum + personCount(r), 0);
   document.getElementById('s-total').textContent     = total;
   document.getElementById('s-paid').textContent      = paid;
   document.getElementById('s-unpaid').textContent    = unpaid;
@@ -392,13 +472,14 @@ function renderCourseOverview() {
     if (!r.課程名稱) return;
     if (!courseMap[r.課程名稱]) courseMap[r.課程名稱] = { total:0, paid:0, unpaid:0, empty:0, attend:0, absent:0, noEmail:0, date:r.開課日期||'' };
     const c = courseMap[r.課程名稱];
-    c.total++;
-    if (r.繳費狀況==='已繳') c.paid++;
-    else if (r.繳費狀況==='未繳') c.unpaid++;
-    else c.empty++;
-    if (r.到課狀況==='出席') c.attend++;
-    if (r.到課狀況==='缺席') c.absent++;
-    if (r.Email && !r.確認信已發) c.noEmail++;
+    const n = personCount(r); // ✅ 該列代表的人數（可能 >1，如小人提名單）
+    c.total += n;
+    if (r.繳費狀況==='已繳') c.paid += n;
+    else if (r.繳費狀況==='未繳') c.unpaid += n;
+    else c.empty += n;
+    if (r.到課狀況==='出席') c.attend += n;
+    if (r.到課狀況==='缺席') c.absent += n;
+    if (r.Email && !r.確認信已發) c.noEmail += n;
   });
 
   const courses = Object.entries(courseMap).sort((a,b) => a[1].date > b[1].date ? 1 : -1);
@@ -461,13 +542,14 @@ function renderSoon() {
     if (!r.課程名稱) return;
     if (!courseMap[r.課程名稱]) courseMap[r.課程名稱] = { total:0, paid:0, unpaid:0, empty:0, attend:0, absent:0, noEmail:0, date:r.開課日期||'' };
     const c = courseMap[r.課程名稱];
-    c.total++;
-    if (r.繳費狀況==='已繳') c.paid++;
-    else if (r.繳費狀況==='未繳') c.unpaid++;
-    else c.empty++;
-    if (r.到課狀況==='出席') c.attend++;
-    if (r.到課狀況==='缺席') c.absent++;
-    if (r.Email && !r.確認信已發) c.noEmail++;
+    const n = personCount(r); // ✅ 該列代表的人數
+    c.total += n;
+    if (r.繳費狀況==='已繳') c.paid += n;
+    else if (r.繳費狀況==='未繳') c.unpaid += n;
+    else c.empty += n;
+    if (r.到課狀況==='出席') c.attend += n;
+    if (r.到課狀況==='缺席') c.absent += n;
+    if (r.Email && !r.確認信已發) c.noEmail += n;
   });
 
   const tb = document.getElementById('tbody-soon');
@@ -506,35 +588,40 @@ function renderCourse() {
     countEl.textContent=''; return;
   }
   const rows = allData.filter(r=>r.課程名稱===course);
-  const paid=rows.filter(r=>r.繳費狀況==='已繳').length;
-  const unpaid=rows.filter(r=>r.繳費狀況!=='已繳').length;
-  const attended=rows.filter(r=>r.到課狀況==='出席').length;
-  const absent=rows.filter(r=>r.到課狀況==='缺席').length;
-  const noEmail=rows.filter(r=>r.Email&&!r.確認信已發).length;
+  const totalPeople = rows.reduce((sum, r) => sum + personCount(r), 0); // ✅ 總人數（含小人提多人列）
+  const paid=rows.filter(r=>r.繳費狀況==='已繳').reduce((sum,r)=>sum+personCount(r),0);
+  const unpaid=rows.filter(r=>r.繳費狀況!=='已繳').reduce((sum,r)=>sum+personCount(r),0);
+  const attended=rows.filter(r=>r.到課狀況==='出席').reduce((sum,r)=>sum+personCount(r),0);
+  const absent=rows.filter(r=>r.到課狀況==='缺席').reduce((sum,r)=>sum+personCount(r),0);
+  const noEmail=rows.filter(r=>r.Email&&!r.確認信已發).reduce((sum,r)=>sum+personCount(r),0);
   const date=rows[0]?.開課日期||'', time=rows[0]?.開課時間||'', instructor=rows[0]?.講師||'';
   summary.classList.add('show');
   document.getElementById('course-summary-title').textContent =
     `${course}${date?'　📅 '+date:''}${time?'　⏰ '+time:''}${instructor?'　👤 '+instructor:''}`;
   document.getElementById('course-mini-stats').innerHTML = `
-    <div class="mini-stat"><div class="n">${rows.length}</div><div class="l">報名人數</div></div>
+    <div class="mini-stat"><div class="n">${totalPeople}</div><div class="l">報名人數</div></div>
     <div class="mini-stat ok"><div class="n">${paid}</div><div class="l">已繳費</div></div>
     <div class="mini-stat warn"><div class="n">${unpaid}</div><div class="l">未繳費</div></div>
     <div class="mini-stat ok"><div class="n">${attended}</div><div class="l">出席</div></div>
     <div class="mini-stat warn"><div class="n">${absent}</div><div class="l">缺席</div></div>
     <div class="mini-stat"><div class="n">${noEmail}</div><div class="l">待發確認信</div></div>`;
   tb.innerHTML = rows.length===0 ? '<tr><td colspan="10" class="empty">這堂課目前沒有報名資料</td></tr>'
-    : rows.map(r=>`<tr>
+    : rows.map(r=>{
+        const n = personCount(r);
+        const countBadge = n > 1 ? ` <span class="badge badge-blue">${n}人</span>` : '';
+        return `<tr>
         <td>${r.公司名稱||'散客'}</td>
-        <td>${r.學員姓名||'—'}</td>
+        <td class="wrap">${editName(r._row,r.學員姓名)}${countBadge}</td>
         <td>${r.學員電話||'—'}</td>
         <td>${editNote(r._row,r.聯繫記錄)}</td>
         <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
         <td>${emailBadge(r.確認信已發)}</td>
-        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${editSelect(r._row,'狀態',r.狀態,['未登錄','已登錄','已回報'])}</td>
         <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
         <td>${channelBadge(r.進案渠道)}</td>
-        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td></tr>`).join('');
-  countEl.textContent=`共 ${rows.length} 位學員`;
+        <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td></tr>`;
+      }).join('');
+  countEl.textContent=`共 ${totalPeople} 位學員（${rows.length} 筆記錄）`;
 }
 
 // ── 全部名單 ──────────────────────────────────────────────
@@ -554,20 +641,24 @@ function renderAll() {
   });
   document.getElementById('tbody-all').innerHTML = filtered.length===0
     ? '<tr><td colspan="12" class="empty">沒有符合條件的資料</td></tr>'
-    : filtered.map(r=>`<tr>
+    : filtered.map(r=>{
+        const n = personCount(r);
+        const countBadge = n > 1 ? ` <span class="badge badge-blue">${n}人</span>` : '';
+        return `<tr>
         <td>${r.公司名稱||'散客'}</td>
-        <td>${r.學員姓名||'—'}</td>
+        <td class="wrap">${editName(r._row,r.學員姓名)}${countBadge}</td>
         <td class="wrap">${r.課程名稱||'—'}</td>
         <td>${r.開課日期||'—'}</td>
         <td>${editNote(r._row,r.聯繫記錄)}</td>
         <td>${editSelect(r._row,'繳費狀況',r.繳費狀況,['未繳','已繳'])}</td>
         <td>${emailBadge(r.確認信已發)}</td>
-        <td>${editSelect(r._row,'狀態',r.狀態,['已登錄','已回報'])}</td>
+        <td>${editSelect(r._row,'狀態',r.狀態,['未登錄','已登錄','已回報'])}</td>
         <td>${editSelect(r._row,'到課狀況',r.到課狀況,['','出席','缺席','請假'])}</td>
         <td>${channelBadge(r.進案渠道)}</td>
         <td>${editSelect(r._row,'負責人',r.負責人,['','佑妮','大師兄','克斯'])}</td>
-        <td>${r.報名日期||'—'}</td></tr>`).join('');
-  document.getElementById('all-count').textContent=`共 ${filtered.length} 筆`;
+        <td>${r.報名日期||'—'}</td></tr>`;
+      }).join('');
+  document.getElementById('all-count').textContent=`共 ${filtered.reduce((s,r)=>s+personCount(r),0)} 位學員（${filtered.length} 筆記錄）`;
 }
 
 function switchTab(name) {
@@ -576,6 +667,65 @@ function switchTab(name) {
   const tabs=['todo','class','course','all'];
   document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ── 新增小人提名單 ────────────────────────────────────────
+function toggleAddForm() {
+  const form = document.getElementById('add-form');
+  const isHidden = form.style.display === 'none';
+  form.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    document.getElementById('add-company').value = '';
+    document.getElementById('add-students').value = '';
+    document.getElementById('add-course').value = '';
+    document.getElementById('add-course-info').style.display = 'none';
+  }
+}
+
+function onAddCourseChange() {
+  const course = document.getElementById('add-course').value;
+  const info = document.getElementById('add-course-info');
+  if (!course || !courseInfoMap[course]) { info.style.display = 'none'; return; }
+  const c = courseInfoMap[course];
+  info.style.display = 'block';
+  info.textContent = `📅 ${c.date||'—'} ｜ ⏰ ${c.time||'—'} ｜ 👤 講師：${c.instructor||'—'}`;
+}
+
+async function submitAddBatch() {
+  const course   = document.getElementById('add-course').value;
+  const company  = document.getElementById('add-company').value.trim();
+  const students = document.getElementById('add-students').value.trim();
+
+  if (!course)   { showToast('請選擇課程場次', true); return; }
+  if (!company)  { showToast('請輸入公司名稱', true); return; }
+  if (!students) { showToast('請輸入學員姓名', true); return; }
+
+  const btn = document.querySelector('#add-form button.refresh-btn');
+  btn.disabled = true; btn.textContent = '送出中...';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'addBatchRegistration',
+        課程名稱: course,
+        公司名稱: company,
+        學員姓名: students,
+        狀態: '未登錄',
+      }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast('✅ 已新增小人提名單');
+      toggleAddForm();
+      loadData();
+    } else {
+      showToast(`❌ 新增失敗：${json.error||''}`, true);
+    }
+  } catch(e) {
+    showToast('❌ 網路錯誤', true);
+  }
+  btn.disabled = false; btn.textContent = '✓ 送出';
 }
 
 loadData();
