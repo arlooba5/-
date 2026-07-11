@@ -193,7 +193,7 @@ teacher: (r[7]||'').toString().trim(),
 dateRaw: r[8],
 time: (r[9]||'').toString().trim(),
 date: parseDate(r[8]),
-})).filter(r => r.name && r.name !== '未排定' && r.date);
+})).filter(r => r.type && r.date);
 }
 
 function loadData() {
@@ -312,7 +312,7 @@ return `<tr${pastCls}>
 ${showType ? `<td>${typeBadge(r.type)}</td>` : ''}
 <td>${r.station||'—'}</td>
 <td>${r.unit||'—'}</td>
-<td class="wrap">${r.name}</td>
+<td class="wrap">${r.name || '（尚未命名）'}</td>
 <td>${teacherHtml}</td>
 <td>${r.time||'—'}</td>
 ${!showType ? `<td>${r.target||'—'}</td><td>${r.hours||'—'}</td>` : ''}
@@ -329,7 +329,7 @@ tw.innerHTML = thisWeek.length
 ? thisWeek.map(r=>`<tr${isToday(r.date)?' class="today-row"':''}>
 <td>${fmtDate(r.date)}</td><td>${typeBadge(r.type)}</td>
 <td>${r.station||'—'}</td><td>${r.unit||'—'}</td>
-<td class="wrap">${r.name}</td>
+<td class="wrap">${r.name || '（尚未命名）'}</td>
 <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
 <td>${r.time||'—'}</td></tr>`).join('')
 : '<tr><td colspan="7" class="empty">本週無課程</td></tr>';
@@ -339,7 +339,7 @@ tn.innerHTML = nextWeek.length
 ? nextWeek.map(r=>`<tr>
 <td>${fmtDate(r.date)}</td><td>${typeBadge(r.type)}</td>
 <td>${r.station||'—'}</td><td>${r.unit||'—'}</td>
-<td class="wrap">${r.name}</td>
+<td class="wrap">${r.name || '（尚未命名）'}</td>
 <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
 <td>${r.time||'—'}</td></tr>`).join('')
 : '<tr><td colspan="7" class="empty">下週無課程</td></tr>';
@@ -351,7 +351,7 @@ const missing = allData.filter(r=>!r.teacher && r.date>=today).sort((a,b)=>a.dat
 const el = document.getElementById('list-missing');
 el.innerHTML = missing.length
 ? missing.map(r=>`<div class="alert-card">
-<div class="cn">${r.name}</div>
+<div class="cn">${r.name || '（尚未命名）'}</div>
 <div class="cd">📅 ${fmtDate(r.date)} ｜ 📍 ${r.station} ${r.unit} ｜ ${typeBadge(r.type)}</div>
 </div>`).join('')
 : '<div class="empty">✅ 所有即將到來的課程均已安排講師</div>';
@@ -380,7 +380,7 @@ return `<tr${pastCls}>
 <td>${r.station||'—'}</td>
 <td>${r.unit||'—'}</td>
 <td>${r.target||'—'}</td>
-<td class="wrap">${r.name}</td>
+<td class="wrap">${r.name || '（尚未命名）'}</td>
 <td>${r.teacher||'<span class="no-teacher">⚠️ 未安排</span>'}</td>
 <td>${r.time||'—'}</td>
 <td>${r.hours||'—'}</td>
