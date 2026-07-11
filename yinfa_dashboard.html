@@ -93,7 +93,7 @@ td.wrap{white-space:normal;max-width:200px;}
 <div class="stat warn"><div class="n" id="s-no-teacher">0</div><div class="l">未排講師</div></div>
 <div class="stat ok"><div class="n" id="s-nextweek">0</div><div class="l">下週開課</div></div>
 <div class="stat" id="stat-remain"><div class="n" id="s-remain">0</div><div class="l">剩餘時數</div></div>
-<div class="stat"><div class="n" id="s-sessions">0</div><div class="l">累計場次（含銀髮）</div></div>
+<div class="stat"><div class="n" id="s-sessions">0</div><div class="l">累計場次</div></div>
 <div class="stat ok"><div class="n" id="s-done">0</div><div class="l">已完課</div></div>
 <div class="stat"><div class="n" id="s-upcoming">0</div><div class="l">待執行</div></div>
 </div>
@@ -160,19 +160,18 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwP_uohOnFEuEXuLvXInUbV
 // 特對就促合約總時數額度（全部類別，含銀髮，一起計入已用時數）
 const TOTAL_HOURS_QUOTA = 534;
 
-let allData = [];      // 特定對象工作表（本頁主要顯示用）
-let yinfaRaw = [];     // 銀髮工作表原始列（欄位配置跟特定對象不同：0類別 1單位 2時數 3課程名稱 4講師 5日期）
+let allData = [];      // 特定對象工作表（銀髮資料已併入同一張表，不再另外讀取銀髮分頁）
+let rawSpecific = [];  // 特定對象工作表原始列（用於剩餘時數：只要「課程類別」欄有填，時數就算已登錄，不受課程名稱是否為「未排定」影響）
 
-// 銀髮工作表時數／場次加總（欄位配置與特定對象不同，不能共用 mapRows）
-function sumYinfaHours(rows) {
+function sumAllHours(rows) {
 return (rows || []).reduce((s, r) => {
-const name = (r[3]||'').toString().trim();
-if (!name) return s;
-return s + (parseFloat(r[2]) || 0);
+const type = (r[0]||'').toString().trim();
+if (!type) return s;
+return s + (parseFloat(r[4]) || 0);
 }, 0);
 }
-function countYinfaSessions(rows) {
-return (rows || []).filter(r => (r[3]||'').toString().trim()).length;
+function countAllRows(rows) {
+return (rows || []).filter(r => (r[0]||'').toString().trim()).length;
 }
 
 // 日期
@@ -204,7 +203,7 @@ fetch(API_URL)
 .then(r => r.json())
 .then(json => {
 allData = mapRows(json['特定對象']);
-yinfaRaw = json['銀髮'] || [];
+rawSpecific = json['特定對象'] || [];
 buildFilters();
 renderStats();
 renderWeek();
@@ -293,8 +292,8 @@ document.getElementById('s-nextweek').textContent = allData.filter(r=>inRange(r.
 document.getElementById('s-done').textContent = allData.filter(r=>isPast(r.date)).length;
 document.getElementById('s-upcoming').textContent = allData.filter(r=>r.date>=today).length;
 
-// 剩餘時數／累計場次：特定對象 + 銀髮 一起計算（欄位配置不同，銀髮用專用加總函式）
-const usedHours = allData.reduce((s,r) => s + (parseFloat(r.hours)||0), 0) + sumYinfaHours(yinfaRaw);
+// 剩餘時數／累計場次：只要「課程類別」欄有填就算已登錄（不受課程名稱是否為「未排定」影響，跟控管表金額對得起來）
+const usedHours = sumAllHours(rawSpecific);
 const remainHrs = Math.round((TOTAL_HOURS_QUOTA - usedHours) * 10) / 10;
 
 const remainEl = document.getElementById('s-remain');
@@ -302,7 +301,7 @@ remainEl.textContent = remainHrs;
 const remainStat = document.getElementById('stat-remain');
 remainStat.className = 'stat ' + (remainHrs < 50 ? 'danger' : remainHrs < 100 ? 'warn' : 'ok');
 
-document.getElementById('s-sessions').textContent = allData.length + countYinfaSessions(yinfaRaw);
+document.getElementById('s-sessions').textContent = countAllRows(rawSpecific);
 }
 
 function courseRow(r, showType=true) {
