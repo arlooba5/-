@@ -161,7 +161,19 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwP_uohOnFEuEXuLvXInUbV
 const TOTAL_HOURS_QUOTA = 534;
 
 let allData = [];      // 特定對象工作表（本頁主要顯示用）
-let yinfaData = [];    // 銀髮工作表（僅用於加總「剩餘時數／累計場次」）
+let yinfaRaw = [];     // 銀髮工作表原始列（欄位配置跟特定對象不同：0類別 1單位 2時數 3課程名稱 4講師 5日期）
+
+// 銀髮工作表時數／場次加總（欄位配置與特定對象不同，不能共用 mapRows）
+function sumYinfaHours(rows) {
+return (rows || []).reduce((s, r) => {
+const name = (r[3]||'').toString().trim();
+if (!name) return s;
+return s + (parseFloat(r[2]) || 0);
+}, 0);
+}
+function countYinfaSessions(rows) {
+return (rows || []).filter(r => (r[3]||'').toString().trim()).length;
+}
 
 // 日期
 const d = new Date();
@@ -192,7 +204,7 @@ fetch(API_URL)
 .then(r => r.json())
 .then(json => {
 allData = mapRows(json['特定對象']);
-yinfaData = mapRows(json['銀髮']);
+yinfaRaw = json['銀髮'] || [];
 buildFilters();
 renderStats();
 renderWeek();
@@ -281,9 +293,8 @@ document.getElementById('s-nextweek').textContent = allData.filter(r=>inRange(r.
 document.getElementById('s-done').textContent = allData.filter(r=>isPast(r.date)).length;
 document.getElementById('s-upcoming').textContent = allData.filter(r=>r.date>=today).length;
 
-// 剩餘時數／累計場次：特定對象 + 銀髮 一起計算
-const combined = allData.concat(yinfaData);
-const usedHours = combined.reduce((s,r) => s + (parseFloat(r.hours)||0), 0);
+// 剩餘時數／累計場次：特定對象 + 銀髮 一起計算（欄位配置不同，銀髮用專用加總函式）
+const usedHours = allData.reduce((s,r) => s + (parseFloat(r.hours)||0), 0) + sumYinfaHours(yinfaRaw);
 const remainHrs = Math.round((TOTAL_HOURS_QUOTA - usedHours) * 10) / 10;
 
 const remainEl = document.getElementById('s-remain');
@@ -291,7 +302,7 @@ remainEl.textContent = remainHrs;
 const remainStat = document.getElementById('stat-remain');
 remainStat.className = 'stat ' + (remainHrs < 50 ? 'danger' : remainHrs < 100 ? 'warn' : 'ok');
 
-document.getElementById('s-sessions').textContent = combined.length;
+document.getElementById('s-sessions').textContent = allData.length + countYinfaSessions(yinfaRaw);
 }
 
 function courseRow(r, showType=true) {
