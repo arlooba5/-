@@ -156,9 +156,8 @@ td.wrap{white-space:normal;max-width:200px;}
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbwP_uohOnFEuEXuLvXInUbVtP3HzAs8Qbep_Y0JN0wQcjcvRp81bKCQNPmnlrkjzn0/exec';
-
-// 特對就促合約總時數額度（全部類別，含銀髮，一起計入已用時數）
-const TOTAL_HOURS_QUOTA = 534;
+// 特對就促合約總時數額度（不含銀髮，銀髮就促/銀髮3C 另計）
+const TOTAL_HOURS_QUOTA = 435;
 
 let allData = [];      // 特定對象工作表（銀髮資料已併入同一張表，不再另外讀取銀髮分頁）
 let rawSpecific = [];  // 特定對象工作表原始列（用於剩餘時數：只要「課程類別」欄有填，時數就算已登錄，不受課程名稱是否為「未排定」影響）
@@ -166,7 +165,7 @@ let rawSpecific = [];  // 特定對象工作表原始列（用於剩餘時數：
 function sumAllHours(rows) {
 return (rows || []).reduce((s, r) => {
 const type = (r[0]||'').toString().trim();
-if (!type) return s;
+if (!type || type.includes('銀髮')) return s;
 return s + (parseFloat(r[4]) || 0);
 }, 0);
 }
